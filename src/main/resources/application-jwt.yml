@@ -1,0 +1,4 @@
+jwt:
+  secret: ${JWT_SECRET}
+  accessTokenValidityMs: 1800000
+  refreshTokenValidityMs: 604800000

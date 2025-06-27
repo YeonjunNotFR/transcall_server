@@ -1,0 +1,18 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  profiles:
+    include: oauth, jwt, docker
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+server:
+  port: 8080
+
+# 필요시 로그 레벨 설정 (개발 중 debug)
+logging:
+  level:
+    org.springframework.security: INFO
+    io.jsonwebtoken: DEBUG

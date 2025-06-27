@@ -1,15 +1,24 @@
-version: '3.8'
+version: "3.8"
 
 services:
   postgres:
-    image: postgres:16  # PostgreSQL 16 버전 이미지
-    container_name: transcall_postgres
+    image: postgres:16
+    container_name: transcall-db
     env_file:
       - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5432:5432"                  # 호스트:컨테이너 포트 매핑
+      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # 데이터 보존
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U transcall"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  postgres_data:
+  postgres-data:

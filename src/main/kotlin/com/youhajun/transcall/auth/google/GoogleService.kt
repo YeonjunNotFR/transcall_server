@@ -1,5 +1,9 @@
 package com.youhajun.transcall.auth.google
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
+import com.google.api.client.json.gson.GsonFactory
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
@@ -41,5 +45,17 @@ class GoogleService(
             .retrieve()
             .bodyToMono(GoogleUserInfo::class.java)
             .awaitSingle()
+    }
+
+    fun verifyClientToken(idToken: String, nonce: String): GoogleIdToken? {
+        val transport = GoogleNetHttpTransport.newTrustedTransport()
+        val jsonFactory = GsonFactory()
+        val verifier = GoogleIdTokenVerifier.Builder(transport, jsonFactory)
+            .setAudience(listOf(googleAuthConfig.clientId))
+            .build()
+
+        val verifiedIdToken = verifier.verify(idToken) ?: return null
+        val payloadNonce = verifiedIdToken.payload.nonce
+        return if(payloadNonce == nonce) verifiedIdToken else null
     }
 }

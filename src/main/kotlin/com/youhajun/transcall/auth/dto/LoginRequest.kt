@@ -4,5 +4,6 @@ import com.youhajun.transcall.user.domain.SocialType
 
 data class LoginRequest(
     val socialType: SocialType,
-    val authorizationCode: String
+    val token: String,
+    val loginRequestId: String
 )

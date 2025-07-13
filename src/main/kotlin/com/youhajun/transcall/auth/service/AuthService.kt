@@ -2,8 +2,10 @@ package com.youhajun.transcall.auth.service
 
 import com.youhajun.transcall.auth.dto.JwtTokenResponse
 import com.youhajun.transcall.auth.dto.LoginRequest
+import com.youhajun.transcall.auth.dto.NonceResponse
 
 interface AuthService {
     suspend fun loginOrCreate(loginRequest: LoginRequest): JwtTokenResponse
     suspend fun reissueToken(offerRefreshToken: String): JwtTokenResponse
+    fun generateNonce(): NonceResponse
 }

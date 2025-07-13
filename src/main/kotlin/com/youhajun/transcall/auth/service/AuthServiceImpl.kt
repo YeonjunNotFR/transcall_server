@@ -3,10 +3,12 @@ package com.youhajun.transcall.auth.service
 import com.youhajun.transcall.auth.domain.RefreshToken
 import com.youhajun.transcall.auth.dto.JwtTokenResponse
 import com.youhajun.transcall.auth.dto.LoginRequest
+import com.youhajun.transcall.auth.dto.NonceResponse
 import com.youhajun.transcall.auth.exception.AuthException
 import com.youhajun.transcall.auth.google.GoogleService
 import com.youhajun.transcall.auth.jwt.JwtConfig
 import com.youhajun.transcall.auth.jwt.JwtProvider
+import com.youhajun.transcall.auth.repository.LoginNonceRepository
 import com.youhajun.transcall.auth.repository.RefreshTokenRepository
 import com.youhajun.transcall.user.domain.SocialType
 import com.youhajun.transcall.user.domain.User
@@ -20,6 +22,7 @@ import java.util.*
 class AuthServiceImpl(
     private val transactionalOperator: TransactionalOperator,
     private val refreshTokenRepository: RefreshTokenRepository,
+    private val loginNonceRepository: LoginNonceRepository,
     private val userService: UserService,
     private val googleService: GoogleService,
     private val jwtProvider: JwtProvider,
@@ -43,6 +46,13 @@ class AuthServiceImpl(
         }
     }
 
+    override fun generateNonce(): NonceResponse {
+        val loginRequestId = UUID.randomUUID().toString()
+        val nonce = UUID.randomUUID().toString()
+        loginNonceRepository.saveNonce(loginRequestId = loginRequestId, nonce = nonce)
+        return NonceResponse(nonce = nonce, loginRequestId = loginRequestId)
+    }
+
     private suspend fun tokenRotation(user: User): JwtTokenResponse {
         val userPublicId = user.publicId.toString()
         return jwtProvider.issueTokens(user).also {
@@ -57,12 +67,13 @@ class AuthServiceImpl(
         refreshTokenRepository.save(newRefreshToken)
     }
 
-    private suspend fun fetchSocialEmail(loginRequest: LoginRequest): String {
+    private fun fetchSocialEmail(loginRequest: LoginRequest): String {
         return when (loginRequest.socialType) {
             SocialType.GOOGLE -> {
-                val token = googleService.fetchToken(loginRequest.authorizationCode)
-                val userInfo = googleService.fetchUserInfo(token.access_token)
-                userInfo.email
+                val nonce = loginNonceRepository.getAndRemoveNonce(loginRequest.loginRequestId) ?: throw AuthException.InvalidNonceException()
+                val idToken = googleService.verifyClientToken(loginRequest.token, nonce) ?: throw AuthException.InvalidGoogleTokenException()
+                val payload = idToken.payload
+                if(payload.emailVerified) payload.email else throw AuthException.EmailNotVerifiedException()
             }
         }
     }

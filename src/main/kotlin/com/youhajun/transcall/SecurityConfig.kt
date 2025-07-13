@@ -1,33 +1,51 @@
 package com.youhajun.transcall
 
+import com.youhajun.transcall.auth.exception.AuthException
 import com.youhajun.transcall.auth.jwt.JwtAuthenticationFilter
-import com.youhajun.transcall.common.exception.FilterChainExceptionHandler
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.http.SessionCreationPolicy
-import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder
+import org.springframework.security.config.web.server.ServerHttpSecurity
+import org.springframework.security.web.server.SecurityWebFilterChain
+import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository
+import reactor.core.publisher.Mono
+
 
 @Configuration
-@EnableWebSecurity
+@EnableWebFluxSecurity
 class SecurityConfig(
-    private val jwtAuthenticationFilter: JwtAuthenticationFilter,
-    private val filterChainExceptionHandler: FilterChainExceptionHandler
+    private val jwtFilter: JwtAuthenticationFilter,
 ) {
 
     @Bean
-    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
+    fun securityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         return http
+            .httpBasic { it.disable() }
             .csrf { it.disable() }
-            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
-            .authorizeHttpRequests {
-                it.requestMatchers("/api/auth/**").permitAll()
-                it.anyRequest().authenticated()
+            .authorizeExchange { exchange ->
+                exchange.pathMatchers(
+                    "/api/auth/**",
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-resources/**",
+                    "/webjars/**",
+                ).permitAll().anyExchange().authenticated()
             }
-            .addFilterBefore(filterChainExceptionHandler, UsernamePasswordAuthenticationFilter::class.java)
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
+            .exceptionHandling {
+                it.authenticationEntryPoint { _, _ ->
+                    val error = AuthException.InvalidAccessTokenException()
+                    return@authenticationEntryPoint Mono.error(error)
+                }
+            }
+            .redirectToHttps {
+                it.httpsRedirectWhen { exchange ->
+                    val forwardedProto = exchange.request.headers.getFirst("x-forwarded-proto")
+                    forwardedProto == "http"
+                }
+            }
+            .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
+            .addFilterAt(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION)
             .build()
     }
 }

@@ -1,25 +1,24 @@
 package com.youhajun.transcall.auth.repository
 
-import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate
 import org.springframework.stereotype.Repository
+import reactor.core.publisher.Mono
 import java.time.Duration
 
 @Repository
 class LoginNonceRepository(
-    private val redisTemplate: StringRedisTemplate
+    private val reactiveRedisTemplate: ReactiveStringRedisTemplate
 ) {
 
     private val keyPrefix = "nonce:"
 
-    fun saveNonce(loginRequestId: String, nonce: String, ttlSeconds: Long = 300) {
+    fun saveNonce(loginRequestId: String, nonce: String, ttlSeconds: Long = 300): Mono<Boolean> {
         val key = "$keyPrefix$loginRequestId"
-        redisTemplate.opsForValue().set(key, nonce, Duration.ofSeconds(ttlSeconds))
+        return reactiveRedisTemplate.opsForValue().set(key, nonce, Duration.ofSeconds(ttlSeconds))
     }
 
-    fun getAndRemoveNonce(loginRequestId: String): String? {
+    fun getAndDeleteNonce(loginRequestId: String): Mono<String> {
         val key = "$keyPrefix$loginRequestId"
-        return redisTemplate.opsForValue().get(key)?.apply {
-            redisTemplate.delete(key)
-        }
+        return reactiveRedisTemplate.opsForValue().getAndDelete(key)
     }
 }

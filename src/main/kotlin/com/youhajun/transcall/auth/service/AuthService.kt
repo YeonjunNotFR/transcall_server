@@ -7,5 +7,5 @@ import com.youhajun.transcall.auth.dto.NonceResponse
 interface AuthService {
     suspend fun loginOrCreate(loginRequest: LoginRequest): JwtTokenResponse
     suspend fun reissueToken(offerRefreshToken: String): JwtTokenResponse
-    fun generateNonce(): NonceResponse
+    suspend fun generateNonce(): NonceResponse
 }

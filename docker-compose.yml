@@ -1,11 +1,9 @@
-version: "3.8"
-
 services:
   redis:
     env_file:
       - .env
     image: redis:7-alpine
-    container_name: redis
+    container_name: transcall-redis
     ports:
       - "6379:6379"
     volumes:
@@ -14,22 +12,22 @@ services:
 
   postgres:
     image: postgres:16
-    container_name: transcall-db
-    env_file:
-      - .env
+    container_name: transcall-postgres
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U transcall"]
+      test: ["CMD-SHELL", "pg_isready -U $${DB_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
 volumes:
-  postgres-data:
+  redis-data:
+  pgdata:

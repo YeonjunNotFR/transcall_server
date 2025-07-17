@@ -2,7 +2,7 @@ spring:
   config:
     import: optional:file:.env[.properties]
   profiles:
-    include: oauth, jwt, docker
+    include: oauth, jwt, docker, redis
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/${DB_NAME}
     username: ${DB_USER}

@@ -33,8 +33,8 @@ class AuthServiceImpl(
 
     override suspend fun loginOrCreate(loginRequest: LoginRequest): JwtTokenResponse {
         val socialEmail = fetchSocialEmail(loginRequest)
+        val user = userService.findOrCreateUser(socialEmail, loginRequest.socialType)
         return transactionalOperator.executeAndAwait {
-            val user = userService.findOrCreateUser(socialEmail, loginRequest.socialType)
             tokenRotation(user)
         }
     }
@@ -42,8 +42,8 @@ class AuthServiceImpl(
     override suspend fun reissueToken(offerRefreshToken: String): JwtTokenResponse {
         val refreshToken = refreshTokenRepository.findByToken(offerRefreshToken) ?: throw AuthException.InvalidRefreshTokenException()
         jwtProvider.validateRefreshToken(refreshToken)
+        val user = userService.findUserByPublicId(refreshToken.userPublicId)
         return transactionalOperator.executeAndAwait {
-            val user = userService.findUserByPublicId(refreshToken.userPublicId)
             tokenRotation(user)
         }
     }
@@ -57,14 +57,14 @@ class AuthServiceImpl(
     }
 
     private suspend fun tokenRotation(user: User): JwtTokenResponse {
-        val userPublicId = user.publicId.toString()
+        val userPublicId = user.publicId
         return jwtProvider.issueTokens(user).also {
             refreshTokenRepository.deleteByUserPublicId(userPublicId)
             saveRefreshToken(it.refreshToken, userPublicId)
         }
     }
 
-    private suspend fun saveRefreshToken(refreshToken: String, userPublicId: String) {
+    private suspend fun saveRefreshToken(refreshToken: String, userPublicId: UUID) {
         val expireAt = Date(Date().time + jwtConfig.refreshTokenValidityMs)
         val newRefreshToken = RefreshToken(token = refreshToken, userPublicId = userPublicId, expireAt = expireAt)
         refreshTokenRepository.save(newRefreshToken)

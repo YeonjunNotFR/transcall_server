@@ -20,7 +20,7 @@ class AuthController(
         return authService.loginOrCreate(request)
     }
 
-    @GetMapping("/auth/nonce")
+    @GetMapping("/nonce")
     suspend fun loginNonce(): NonceResponse {
         return authService.generateNonce()
     }

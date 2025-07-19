@@ -12,6 +12,8 @@ spring:
     url: r2dbc:postgresql://localhost:5432/${DB_NAME}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+    properties:
+      logging-level: debug
 
 server:
   port: 8443
@@ -27,3 +29,5 @@ logging:
   level:
     org.springframework.security: INFO
     io.jsonwebtoken: DEBUG
+    org.springframework.r2dbc.core: DEBUG
+    io.r2dbc.h2.client: DEBUG

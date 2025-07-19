@@ -17,20 +17,19 @@ class UserServiceImpl(
 
     override suspend fun findOrCreateUser(email: String, socialType: SocialType): User {
         return transactionalOperator.executeAndAwait {
-            userRepository.findByEmail(email) ?: createAndSaveUser(email, socialType)
+            userRepository.findUserByEmail(email) ?: createUser(email, socialType)
         }
     }
 
-    override suspend fun findUserByPublicId(publicId: String): User {
-        return userRepository.findByPublicId(UUID.fromString(publicId))
-            ?: throw UserException.UserNotFoundException()
+    override suspend fun findUserByPublicId(publicId: UUID): User {
+        return userRepository.findUserByPublicId(publicId) ?: throw UserException.UserNotFoundException()
     }
 
     override suspend fun isEmailExist(email: String): Boolean {
-        return userRepository.existsByEmail(email)
+        return userRepository.existsUserByEmail(email)
     }
 
-    private suspend fun createAndSaveUser(email: String, socialType: SocialType): User {
+    private suspend fun createUser(email: String, socialType: SocialType): User {
         val newUser = User(email = email, socialType = socialType, nickname = generateRandomNickname())
         return userRepository.save(newUser)
     }

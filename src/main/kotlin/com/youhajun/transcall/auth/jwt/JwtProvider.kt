@@ -1,6 +1,7 @@
 package com.youhajun.transcall.auth.jwt
 
 import com.youhajun.transcall.auth.domain.RefreshToken
+import com.youhajun.transcall.auth.domain.UserPrincipal
 import com.youhajun.transcall.auth.dto.JwtTokenResponse
 import com.youhajun.transcall.auth.exception.AuthException
 import com.youhajun.transcall.user.domain.User
@@ -47,9 +48,10 @@ class JwtProvider(
     }
 
     fun getAuthentication(token: String, claims: Claims): Authentication {
-        val userId = claims.subject
+        val userPublicId = claims.subject
         val plan = claims[CLAIM_KEY_USER_PLAN] as String
-        return UsernamePasswordAuthenticationToken(userId, token, listOf(SimpleGrantedAuthority(plan)))
+        val principal = UserPrincipal(UUID.fromString(userPublicId), plan)
+        return UsernamePasswordAuthenticationToken(principal, token, listOf(SimpleGrantedAuthority(plan)))
     }
 
     fun validateRefreshToken(refreshToken: RefreshToken) {

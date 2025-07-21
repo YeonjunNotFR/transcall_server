@@ -33,7 +33,7 @@ class SecurityConfig(
                 ).permitAll().anyExchange().authenticated()
             }
             .exceptionHandling {
-                it.authenticationEntryPoint { _, _ ->
+                it.authenticationEntryPoint { exchange, _ ->
                     val error = AuthException.InvalidAccessTokenException()
                     return@authenticationEntryPoint Mono.error(error)
                 }

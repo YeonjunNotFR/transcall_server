@@ -6,7 +6,7 @@ import org.springframework.data.relational.core.query.Criteria
 import org.springframework.data.relational.core.query.Query
 import java.util.*
 
-class UserRepositoryCustomImpl(
+class RefreshTokenRepositoryCustomImpl(
     template: R2dbcEntityTemplate
 ) : RefreshTokenRepositoryCustom {
 

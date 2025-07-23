@@ -51,7 +51,7 @@ class AuthServiceImpl(
     override suspend fun generateNonce(): NonceResponse {
         val loginRequestId = UUID.randomUUID().toString()
         val nonce = UUID.randomUUID().toString()
-        val success = loginNonceRepository.saveNonce(loginRequestId = loginRequestId, nonce = nonce).awaitSingle()
+        val success = loginNonceRepository.saveNonce(loginRequestId = loginRequestId, nonce = nonce)
         if(!success) throw AuthException.NonceSaveFailedException()
         return NonceResponse(nonce = nonce, loginRequestId = loginRequestId)
     }
@@ -73,7 +73,7 @@ class AuthServiceImpl(
     private suspend fun fetchSocialEmail(loginRequest: LoginRequest): String {
         return when (loginRequest.socialType) {
             SocialType.GOOGLE -> {
-                val nonce = loginNonceRepository.getAndDeleteNonce(loginRequest.loginRequestId).awaitFirstOrNull() ?: throw AuthException.NonceNotFoundException()
+                val nonce = loginNonceRepository.getAndDeleteNonce(loginRequest.loginRequestId)
                 val idToken = googleService.verifyClientToken(loginRequest.token, nonce) ?: throw AuthException.InvalidGoogleTokenException()
                 val payload = idToken.payload
                 if(payload.emailVerified) payload.email else throw AuthException.EmailNotVerifiedException()

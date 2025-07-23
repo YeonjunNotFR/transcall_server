@@ -1,10 +1,7 @@
 package com.youhajun.transcall.user.repository
 
 import com.youhajun.transcall.user.domain.User
-import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
-import org.springframework.data.r2dbc.core.awaitExists
-import org.springframework.data.r2dbc.core.awaitFirstOrNull
-import org.springframework.data.r2dbc.core.select
+import org.springframework.data.r2dbc.core.*
 import org.springframework.data.relational.core.query.Criteria
 import org.springframework.data.relational.core.query.Query
 import java.util.*
@@ -24,12 +21,12 @@ class UserRepositoryCustomImpl(
     override suspend fun findUserByEmail(email: String): User? {
         return select
             .matching(Query.query(Criteria.where("email").`is`(email)))
-            .awaitFirstOrNull()
+            .awaitOneOrNull()
     }
 
     override suspend fun findUserByPublicId(publicId: UUID): User? {
         return select
             .matching(Query.query(Criteria.where("public_id").`is`(publicId)))
-            .awaitFirstOrNull()
+            .awaitOneOrNull()
     }
 }

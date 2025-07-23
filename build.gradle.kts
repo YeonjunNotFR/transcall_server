@@ -3,7 +3,6 @@ plugins {
 	kotlin("plugin.spring") version "1.9.25"
 	id("org.springframework.boot") version "3.5.3"
 	id("io.spring.dependency-management") version "1.1.7"
-	kotlin("plugin.jpa") version "1.9.25"
 }
 
 group = "com.youhajun"
@@ -43,6 +42,9 @@ dependencies {
 	implementation("com.google.api-client:google-api-client:2.8.0")
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+	implementation("org.flywaydb:flyway-database-postgresql:11.10.2")
+	runtimeOnly("org.postgresql:postgresql")
 }
 
 kotlin {

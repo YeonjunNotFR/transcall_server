@@ -2,7 +2,9 @@ package com.youhajun.transcall.user.service
 
 import com.youhajun.transcall.user.domain.SocialType
 import com.youhajun.transcall.user.domain.User
+import com.youhajun.transcall.user.dto.MyInfoResponse
 import com.youhajun.transcall.user.exception.UserException
+import com.youhajun.transcall.user.repository.UserQuotaRepository
 import com.youhajun.transcall.user.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
@@ -12,6 +14,7 @@ import java.util.*
 @Service
 class UserServiceImpl(
     private val userRepository: UserRepository,
+    private val userQuotaRepository: UserQuotaRepository,
     private val transactionalOperator: TransactionalOperator
 ) : UserService {
 
@@ -23,6 +26,11 @@ class UserServiceImpl(
 
     override suspend fun findUserByPublicId(publicId: UUID): User {
         return userRepository.findUserByPublicId(publicId) ?: throw UserException.UserNotFoundException()
+    }
+
+    override suspend fun getMyInfo(userPublicId: UUID): MyInfoResponse {
+        val userQuota = userQuotaRepository.findByUserPublicId(userPublicId) ?: throw UserException.UserQuotaNotFoundException()
+        return findUserByPublicId(userPublicId).toMyInfoResponse(userQuota.toRemainTimeResponse())
     }
 
     override suspend fun isEmailExist(email: String): Boolean {

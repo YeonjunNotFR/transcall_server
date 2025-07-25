@@ -1,10 +1,12 @@
 package com.youhajun.transcall.user.domain
 
 import com.youhajun.transcall.common.domain.BaseEntity
+import com.youhajun.transcall.user.dto.MyInfoResponse
+import com.youhajun.transcall.user.dto.RemainTimeResponse
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
-import java.util.UUID
+import java.util.*
 
 @Table("users")
 data class User(
@@ -27,4 +29,16 @@ data class User(
     val profileImageUrl: String? = null,
     @Column("is_active")
     val isActive: Boolean = true,
-) : BaseEntity()
+) : BaseEntity() {
+
+    fun toMyInfoResponse(remainTime: RemainTimeResponse): MyInfoResponse {
+        return MyInfoResponse(
+            userId = publicId,
+            displayName = nickname,
+            language = language.code,
+            membershipPlan = membershipPlan.string,
+            imageUrl = profileImageUrl ?: "",
+            remainTime = remainTime
+        )
+    }
+}

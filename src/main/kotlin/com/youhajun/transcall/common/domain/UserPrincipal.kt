@@ -1,4 +1,4 @@
-package com.youhajun.transcall.auth.domain
+package com.youhajun.transcall.common.domain
 
 import java.util.*
 

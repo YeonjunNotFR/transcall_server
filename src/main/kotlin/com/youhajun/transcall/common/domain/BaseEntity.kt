@@ -4,11 +4,10 @@ import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
 import java.time.LocalDateTime
 
-abstract class BaseEntity(
-
+abstract class BaseEntity {
     @CreatedDate
-    var createdAt: LocalDateTime? = null,
+    var createdAt: LocalDateTime = LocalDateTime.now()
 
     @LastModifiedDate
-    var updatedAt: LocalDateTime? = null
-)
+    var updatedAt: LocalDateTime = LocalDateTime.now()
+}

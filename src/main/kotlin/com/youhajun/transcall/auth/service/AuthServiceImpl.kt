@@ -13,8 +13,6 @@ import com.youhajun.transcall.auth.repository.RefreshTokenRepository
 import com.youhajun.transcall.user.domain.SocialType
 import com.youhajun.transcall.user.domain.User
 import com.youhajun.transcall.user.service.UserService
-import kotlinx.coroutines.reactive.awaitFirstOrNull
-import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait

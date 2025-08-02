@@ -1,7 +1,7 @@
 package com.youhajun.transcall.auth.jwt
 
 import com.youhajun.transcall.auth.domain.RefreshToken
-import com.youhajun.transcall.auth.domain.UserPrincipal
+import com.youhajun.transcall.common.domain.UserPrincipal
 import com.youhajun.transcall.auth.dto.JwtTokenResponse
 import com.youhajun.transcall.auth.exception.AuthException
 import com.youhajun.transcall.user.domain.User

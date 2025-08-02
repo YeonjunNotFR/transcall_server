@@ -6,7 +6,7 @@ import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 import java.util.*
 
-@Table(name = "refresh_token")
+@Table("refresh_token")
 data class RefreshToken(
     @Id
     @Column("id")

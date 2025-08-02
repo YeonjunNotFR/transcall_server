@@ -1,7 +1,11 @@
 package com.youhajun.transcall.auth.repository
 
 import com.youhajun.transcall.auth.domain.RefreshToken
-import org.springframework.data.r2dbc.core.*
+import kotlinx.coroutines.reactor.awaitSingleOrNull
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
+import org.springframework.data.r2dbc.core.awaitFirstOrNull
+import org.springframework.data.r2dbc.core.delete
+import org.springframework.data.r2dbc.core.select
 import org.springframework.data.relational.core.query.Criteria
 import org.springframework.data.relational.core.query.Query
 import java.util.*
@@ -19,9 +23,10 @@ class RefreshTokenRepositoryCustomImpl(
             .awaitFirstOrNull()
     }
 
-    override suspend fun deleteByUserPublicId(publicId: UUID) {
+    override suspend fun deleteByUserPublicId(userPublicId: UUID) {
         delete
-            .matching(Query.query(Criteria.where("publicId").`is`(publicId)))
-            .allAndAwait()
+            .matching(Query.query(Criteria.where("user_public_id").`is`(userPublicId)))
+            .all()
+            .awaitSingleOrNull()
     }
 }

@@ -5,5 +5,5 @@ import java.util.*
 
 interface RefreshTokenRepositoryCustom {
     suspend fun findByToken(token: String): RefreshToken?
-    suspend fun deleteByUserPublicId(publicId: UUID)
+    suspend fun deleteByUserPublicId(userPublicId: UUID)
 }

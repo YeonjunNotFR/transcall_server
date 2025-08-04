@@ -2,6 +2,7 @@ package com.youhajun.transcall.user.service
 
 import com.youhajun.transcall.user.domain.SocialType
 import com.youhajun.transcall.user.domain.User
+import com.youhajun.transcall.user.domain.UserQuota
 import com.youhajun.transcall.user.dto.MyInfoResponse
 import com.youhajun.transcall.user.exception.UserException
 import com.youhajun.transcall.user.repository.UserQuotaRepository
@@ -9,6 +10,8 @@ import com.youhajun.transcall.user.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.*
 
 @Service
@@ -17,6 +20,10 @@ class UserServiceImpl(
     private val userQuotaRepository: UserQuotaRepository,
     private val transactionalOperator: TransactionalOperator
 ) : UserService {
+
+    companion object {
+        private const val INITIAL_QUOTA_SECONDS = 3600L
+    }
 
     override suspend fun findOrCreateUser(email: String, socialType: SocialType): User {
         return transactionalOperator.executeAndAwait {
@@ -29,7 +36,8 @@ class UserServiceImpl(
     }
 
     override suspend fun getMyInfo(userPublicId: UUID): MyInfoResponse {
-        val userQuota = userQuotaRepository.findByUserPublicId(userPublicId) ?: throw UserException.UserQuotaNotFoundException()
+        val userQuota =
+            userQuotaRepository.findByUserPublicId(userPublicId) ?: throw UserException.UserQuotaNotFoundException()
         return findUserByPublicId(userPublicId).toMyInfoResponse(userQuota.toRemainTimeResponse())
     }
 
@@ -39,7 +47,15 @@ class UserServiceImpl(
 
     private suspend fun createUser(email: String, socialType: SocialType): User {
         val newUser = User(email = email, socialType = socialType, nickname = generateRandomNickname())
-        return userRepository.save(newUser)
+        return userRepository.save(newUser).also {
+            createQuota(it.publicId)
+        }
+    }
+
+    private suspend fun createQuota(userPublicId: UUID) {
+        val resetAt: LocalDateTime = LocalDate.now().plusDays(1).atStartOfDay()
+        val quota = UserQuota(userPublicId = userPublicId, remainingSeconds = INITIAL_QUOTA_SECONDS, resetAt = resetAt)
+        userQuotaRepository.save(quota)
     }
 
     private fun generateRandomNickname(): String {

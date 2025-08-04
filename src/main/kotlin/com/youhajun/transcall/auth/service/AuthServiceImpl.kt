@@ -16,6 +16,10 @@ import com.youhajun.transcall.user.service.UserService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.util.*
 
 @Service
@@ -63,7 +67,7 @@ class AuthServiceImpl(
     }
 
     private suspend fun saveRefreshToken(refreshToken: String, userPublicId: UUID) {
-        val expireAt = Date(Date().time + jwtConfig.refreshTokenValidityMs)
+        val expireAt: LocalDateTime = LocalDateTime.now().plus(Duration.ofMillis(jwtConfig.refreshTokenValidityMs))
         val newRefreshToken = RefreshToken(token = refreshToken, userPublicId = userPublicId, expireAt = expireAt)
         refreshTokenRepository.save(newRefreshToken)
     }

@@ -4,6 +4,7 @@ import com.youhajun.transcall.common.domain.BaseEntity
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
+import java.time.LocalDateTime
 import java.util.*
 
 @Table("refresh_token")
@@ -16,5 +17,5 @@ data class RefreshToken(
     @Column("user_public_id")
     val userPublicId: UUID,
     @Column("expire_at")
-    val expireAt: Date
+    val expireAt: LocalDateTime
 ): BaseEntity()

@@ -3,6 +3,7 @@ package com.youhajun.transcall.auth.controller
 import com.youhajun.transcall.auth.dto.JwtTokenResponse
 import com.youhajun.transcall.auth.dto.LoginRequest
 import com.youhajun.transcall.auth.dto.NonceResponse
+import com.youhajun.transcall.auth.dto.ReissueTokenRequest
 import com.youhajun.transcall.auth.service.AuthService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -26,7 +27,7 @@ class AuthController(
     }
 
     @PostMapping("/reissue")
-    suspend fun reissueToken(@RequestBody refreshToken: String): JwtTokenResponse {
-        return authService.reissueToken(refreshToken)
+    suspend fun reissueToken(@RequestBody request: ReissueTokenRequest): JwtTokenResponse {
+        return authService.reissueToken(request.refreshToken)
     }
 }

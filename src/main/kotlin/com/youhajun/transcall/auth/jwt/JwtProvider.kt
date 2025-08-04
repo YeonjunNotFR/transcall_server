@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.stereotype.Component
 import java.security.Key
+import java.time.LocalDateTime
 import java.util.*
 
 @Component
@@ -55,7 +56,7 @@ class JwtProvider(
     }
 
     fun validateRefreshToken(refreshToken: RefreshToken) {
-        if (refreshToken.expireAt.before(Date())) {
+        if (refreshToken.expireAt.isBefore(LocalDateTime.now())) {
             throw AuthException.JwtExpiredException()
         }
     }

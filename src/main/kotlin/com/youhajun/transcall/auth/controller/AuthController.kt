@@ -5,6 +5,7 @@ import com.youhajun.transcall.auth.dto.LoginRequest
 import com.youhajun.transcall.auth.dto.NonceResponse
 import com.youhajun.transcall.auth.dto.ReissueTokenRequest
 import com.youhajun.transcall.auth.service.AuthService
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -17,7 +18,7 @@ class AuthController(
     private val authService: AuthService
 ) {
     @PostMapping("/social-login")
-    suspend fun socialLogin(@RequestBody request: LoginRequest): JwtTokenResponse {
+    suspend fun socialLogin(@Valid @RequestBody request: LoginRequest): JwtTokenResponse {
         return authService.loginOrCreate(request)
     }
 
@@ -27,7 +28,7 @@ class AuthController(
     }
 
     @PostMapping("/reissue")
-    suspend fun reissueToken(@RequestBody request: ReissueTokenRequest): JwtTokenResponse {
+    suspend fun reissueToken(@Valid @RequestBody request: ReissueTokenRequest): JwtTokenResponse {
         return authService.reissueToken(request.refreshToken)
     }
 }

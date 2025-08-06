@@ -53,7 +53,7 @@ class AuthServiceImpl(
     override suspend fun generateNonce(): NonceResponse {
         val loginRequestId = UUID.randomUUID().toString()
         val nonce = UUID.randomUUID().toString()
-        val success = loginNonceRepository.saveNonce(loginRequestId = loginRequestId, nonce = nonce)
+        val success = loginNonceRepository.saveNonce(loginRequestId = loginRequestId, nonce = nonce, ttlSeconds = 300)
         if(!success) throw AuthException.NonceSaveFailedException()
         return NonceResponse(nonce = nonce, loginRequestId = loginRequestId)
     }

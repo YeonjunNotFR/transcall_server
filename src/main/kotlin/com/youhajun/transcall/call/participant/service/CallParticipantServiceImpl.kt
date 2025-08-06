@@ -43,4 +43,17 @@ class CallParticipantServiceImpl(
             },
         )
     }
+
+    override suspend fun joinCallParticipant(userPublicId: UUID, roomCode: UUID) {
+        val user = userService.findUserByPublicId(userPublicId)
+        val participant = CallParticipant(
+            roomCode = roomCode,
+            userPublicId = userPublicId,
+            displayName = user.nickname,
+            profileImageUrl = user.profileImageUrl,
+            languageType = user.language,
+        )
+
+        callParticipantRepository.save(participant)
+    }
 }

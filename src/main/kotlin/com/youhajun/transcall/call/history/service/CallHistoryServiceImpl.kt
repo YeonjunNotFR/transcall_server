@@ -27,10 +27,11 @@ class CallHistoryServiceImpl(
         val historyEdges = participantPage.edges.map { edge ->
             val participant = edge.node
             val history = historyMap[participant.roomCode] ?: throw CallHistoryException.CallHistoryNotFoundException()
+            val historyId = requireNotNull(history.id)
 
             Node(
                 node = CallHistoryResponse(
-                    historyId = history.id!!,
+                    historyId = historyId,
                     startedAtToEpochTime = history.startedAt.toEpochSecond(ZoneOffset.UTC),
                     endedAtToEpochTime = history.endedAt.toEpochSecond(ZoneOffset.UTC),
                     durationSeconds = history.durationSeconds,

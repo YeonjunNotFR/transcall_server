@@ -7,4 +7,5 @@ import java.util.*
 interface CallParticipantService {
     suspend fun checkCallParticipant(userPublicId: UUID, roomCode: UUID)
     suspend fun getCallParticipantList(userPublicId: UUID, after: String?, first: Int): CursorPage<CallParticipant>
+    suspend fun joinCallParticipant(userPublicId: UUID, roomCode: UUID)
 }

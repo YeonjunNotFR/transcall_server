@@ -15,18 +15,18 @@ data class CallParticipant(
     val id: UUID? = null,
     @Column("room_code")
     val roomCode: UUID,
+    @Column("user_public_id")
+    val userPublicId: UUID,
     @Column("language")
     val languageType: LanguageType,
     @Column("display_name")
     val displayName: String,
     @Column("profile_image_url")
-    val profileImageUrl: String,
-    @Column("user_public_id")
-    val userPublicId: UUID,
+    val profileImageUrl: String?,
     @Column("history_title")
-    val historyTitle: String,
+    val historyTitle: String = "",
     @Column("history_summary")
-    val historySummary: String,
+    val historySummary: String = "",
     @Column("history_memo")
     val historyMemo: String = "",
     @Column("history_liked")
@@ -35,9 +35,9 @@ data class CallParticipant(
     val historyDeleted: Boolean = false,
 ) : BaseEntity() {
     fun toDto(): CallParticipantResponse = CallParticipantResponse(
-        id = id.toString(),
+        participantId = requireNotNull(id),
         displayName = displayName,
-        profileImageUrl = profileImageUrl,
+        profileImageUrl = profileImageUrl ?: "",
         languageCode = languageType,
     )
 }

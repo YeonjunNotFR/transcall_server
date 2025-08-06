@@ -7,14 +7,14 @@ import com.youhajun.transcall.pagination.CursorPaginationHelper
 import com.youhajun.transcall.pagination.dto.CursorPage
 import com.youhajun.transcall.pagination.cursor.CreatedAtCursor
 import com.youhajun.transcall.pagination.cursor.CreatedAtCursorCodec
+import com.youhajun.transcall.user.service.UserService
 import org.springframework.stereotype.Service
-import org.springframework.transaction.reactive.TransactionalOperator
 import java.util.*
 
 @Service
 class CallParticipantServiceImpl(
-    private val transactionalOperator: TransactionalOperator,
-    private val callParticipantRepository: CallParticipantRepository
+    private val callParticipantRepository: CallParticipantRepository,
+    private val userService: UserService
 ) : CallParticipantService {
 
     override suspend fun checkCallParticipant(userPublicId: UUID, roomCode: UUID) {
@@ -39,7 +39,7 @@ class CallParticipantServiceImpl(
                 )
             },
             convertItemToCursorFunc = {
-                CreatedAtCursor(createdAt = it.createdAt, id = it.id!!)
+                CreatedAtCursor(createdAt = it.createdAt, id = requireNotNull(it.id))
             },
         )
     }

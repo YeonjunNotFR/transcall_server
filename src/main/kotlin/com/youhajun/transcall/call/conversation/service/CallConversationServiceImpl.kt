@@ -42,9 +42,10 @@ class CallConversationServiceImpl(
                 val transMap = transList.associateBy { it.conversationId }
 
                 conversationList.map { conv ->
-                    val trans = transMap[conv.id]
+                    val convId = requireNotNull(conv.id)
+                    val trans = transMap[convId]
                     ConversationResponse(
-                        conversationId = conv.id!!,
+                        conversationId = convId,
                         senderId = conv.senderId,
                         originText = conv.originText,
                         originLanguage = conv.originLanguage,

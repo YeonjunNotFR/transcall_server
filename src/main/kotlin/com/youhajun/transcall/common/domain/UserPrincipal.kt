@@ -3,6 +3,6 @@ package com.youhajun.transcall.common.domain
 import java.util.*
 
 data class UserPrincipal(
-    val userPublicId: UUID,
+    val userId: UUID,
     val plan: String
 )

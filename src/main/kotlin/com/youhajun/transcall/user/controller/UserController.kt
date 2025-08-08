@@ -16,7 +16,6 @@ class UserController(
     @GetMapping("/me")
     suspend fun getMyInfo(authentication: Authentication): MyInfoResponse {
         val principal = authentication.principal as UserPrincipal
-        val userPublicId = principal.userPublicId
-        return userService.getMyInfo(userPublicId)
+        return userService.getMyInfo(principal.userId)
     }
 }

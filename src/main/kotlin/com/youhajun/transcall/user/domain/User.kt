@@ -1,6 +1,7 @@
 package com.youhajun.transcall.user.domain
 
-import com.youhajun.transcall.common.domain.BaseEntity
+import com.fasterxml.uuid.Generators
+import com.youhajun.transcall.common.domain.BaseUUIDEntity
 import com.youhajun.transcall.user.dto.MyInfoResponse
 import com.youhajun.transcall.user.dto.RemainTimeResponse
 import org.springframework.data.annotation.Id
@@ -12,9 +13,7 @@ import java.util.*
 data class User(
     @Id
     @Column("id")
-    val id: Long? = null,
-    @Column("public_id")
-    val publicId: UUID = UUID.randomUUID(),
+    override val id: UUID = Generators.timeBasedEpochRandomGenerator().generate(),
     @Column("email")
     val email: String,
     @Column("social_type")
@@ -29,11 +28,10 @@ data class User(
     val profileImageUrl: String? = null,
     @Column("is_active")
     val isActive: Boolean = true,
-) : BaseEntity() {
-
+) : BaseUUIDEntity() {
     fun toMyInfoResponse(remainTime: RemainTimeResponse): MyInfoResponse {
         return MyInfoResponse(
-            userId = publicId,
+            userId = id,
             displayName = nickname,
             language = language.code,
             membershipPlan = membershipPlan.string,

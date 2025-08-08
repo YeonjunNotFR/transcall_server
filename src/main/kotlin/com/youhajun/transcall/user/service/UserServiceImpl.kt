@@ -31,14 +31,13 @@ class UserServiceImpl(
         }
     }
 
-    override suspend fun findUserByPublicId(publicId: UUID): User {
-        return userRepository.findUserByPublicId(publicId) ?: throw UserException.UserNotFoundException()
+    override suspend fun findUserById(id: UUID): User {
+        return userRepository.findById(id) ?: throw UserException.UserNotFoundException()
     }
 
-    override suspend fun getMyInfo(userPublicId: UUID): MyInfoResponse {
-        val userQuota =
-            userQuotaRepository.findByUserPublicId(userPublicId) ?: throw UserException.UserQuotaNotFoundException()
-        return findUserByPublicId(userPublicId).toMyInfoResponse(userQuota.toRemainTimeResponse())
+    override suspend fun getMyInfo(userId: UUID): MyInfoResponse {
+        val userQuota = userQuotaRepository.findById(userId) ?: throw UserException.UserQuotaNotFoundException()
+        return findUserById(userId).toMyInfoResponse(userQuota.toRemainTimeResponse())
     }
 
     override suspend fun isEmailExist(email: String): Boolean {
@@ -48,13 +47,13 @@ class UserServiceImpl(
     private suspend fun createUser(email: String, socialType: SocialType): User {
         val newUser = User(email = email, socialType = socialType, nickname = generateRandomNickname())
         return userRepository.save(newUser).also {
-            createQuota(it.publicId)
+            createQuota(it.id)
         }
     }
 
-    private suspend fun createQuota(userPublicId: UUID) {
+    private suspend fun createQuota(userId: UUID) {
         val resetAt: LocalDateTime = LocalDate.now().plusDays(1).atStartOfDay()
-        val quota = UserQuota(userPublicId = userPublicId, remainingSeconds = INITIAL_QUOTA_SECONDS, resetAt = resetAt)
+        val quota = UserQuota(userId = userId, remainingSeconds = INITIAL_QUOTA_SECONDS, resetAt = resetAt)
         userQuotaRepository.save(quota)
     }
 

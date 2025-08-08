@@ -45,6 +45,8 @@ dependencies {
 
 	implementation("org.flywaydb:flyway-database-postgresql:11.10.2")
 	runtimeOnly("org.postgresql:postgresql")
+
+	implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
 }
 
 kotlin {

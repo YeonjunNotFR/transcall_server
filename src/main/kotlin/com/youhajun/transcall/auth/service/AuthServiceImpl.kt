@@ -17,9 +17,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
 import java.time.Duration
-import java.time.Instant
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.util.*
 
 @Service
@@ -44,7 +42,7 @@ class AuthServiceImpl(
     override suspend fun reissueToken(offerRefreshToken: String): JwtTokenResponse {
         val refreshToken = refreshTokenRepository.findByToken(offerRefreshToken) ?: throw AuthException.InvalidRefreshTokenException()
         jwtProvider.validateRefreshToken(refreshToken)
-        val user = userService.findUserByPublicId(refreshToken.userPublicId)
+        val user = userService.findUserById(refreshToken.userId)
         return transactionalOperator.executeAndAwait {
             tokenRotation(user)
         }
@@ -59,16 +57,15 @@ class AuthServiceImpl(
     }
 
     private suspend fun tokenRotation(user: User): JwtTokenResponse {
-        val userPublicId = user.publicId
         return jwtProvider.issueTokens(user).also {
-            refreshTokenRepository.deleteByUserPublicId(userPublicId)
-            saveRefreshToken(it.refreshToken, userPublicId)
+            refreshTokenRepository.deleteByUserId(user.id)
+            saveRefreshToken(it.refreshToken, user.id)
         }
     }
 
-    private suspend fun saveRefreshToken(refreshToken: String, userPublicId: UUID) {
+    private suspend fun saveRefreshToken(refreshToken: String, userId: UUID) {
         val expireAt: LocalDateTime = LocalDateTime.now().plus(Duration.ofMillis(jwtConfig.refreshTokenValidityMs))
-        val newRefreshToken = RefreshToken(token = refreshToken, userPublicId = userPublicId, expireAt = expireAt)
+        val newRefreshToken = RefreshToken(token = refreshToken, userId = userId, expireAt = expireAt)
         refreshTokenRepository.save(newRefreshToken)
     }
 

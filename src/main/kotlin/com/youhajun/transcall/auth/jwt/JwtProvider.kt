@@ -49,9 +49,9 @@ class JwtProvider(
     }
 
     fun getAuthentication(token: String, claims: Claims): Authentication {
-        val userPublicId = claims.subject
+        val userId = claims.subject
         val plan = claims[CLAIM_KEY_USER_PLAN] as String
-        val principal = UserPrincipal(UUID.fromString(userPublicId), plan)
+        val principal = UserPrincipal(UUID.fromString(userId), plan)
         return UsernamePasswordAuthenticationToken(principal, token, listOf(SimpleGrantedAuthority(plan)))
     }
 
@@ -65,7 +65,7 @@ class JwtProvider(
         val expiry = Date(now.time + jwtConfig.accessTokenValidityMs)
 
         return Jwts.builder()
-            .setSubject(user.publicId.toString())
+            .setSubject(user.id.toString())
             .claim(CLAIM_KEY_USER_PLAN, user.membershipPlan)
             .setIssuedAt(now)
             .setExpiration(expiry)
@@ -77,7 +77,7 @@ class JwtProvider(
         val expiry = Date(now.time + jwtConfig.refreshTokenValidityMs)
 
         return Jwts.builder()
-            .setSubject(user.publicId.toString())
+            .setSubject(user.id.toString())
             .setIssuedAt(now)
             .setExpiration(expiry)
             .signWith(secretKey)

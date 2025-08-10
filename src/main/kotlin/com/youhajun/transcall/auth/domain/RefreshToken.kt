@@ -1,6 +1,7 @@
 package com.youhajun.transcall.auth.domain
 
-import com.youhajun.transcall.common.domain.BaseEntity
+import com.fasterxml.uuid.Generators
+import com.youhajun.transcall.common.domain.BaseUUIDEntity
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
@@ -11,11 +12,11 @@ import java.util.*
 data class RefreshToken(
     @Id
     @Column("id")
-    val id: Long? = null,
+    override val id: UUID = Generators.timeBasedEpochRandomGenerator().generate(),
     @Column("token")
     val token: String,
-    @Column("user_public_id")
-    val userPublicId: UUID,
+    @Column("user_id")
+    val userId: UUID,
     @Column("expire_at")
     val expireAt: LocalDateTime
-): BaseEntity()
+): BaseUUIDEntity()

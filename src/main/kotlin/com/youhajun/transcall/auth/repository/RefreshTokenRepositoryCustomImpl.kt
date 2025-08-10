@@ -23,9 +23,9 @@ class RefreshTokenRepositoryCustomImpl(
             .awaitFirstOrNull()
     }
 
-    override suspend fun deleteByUserPublicId(userPublicId: UUID) {
+    override suspend fun deleteByUserId(userId: UUID) {
         delete
-            .matching(Query.query(Criteria.where("user_public_id").`is`(userPublicId)))
+            .matching(Query.query(Criteria.where("user_id").`is`(userId)))
             .all()
             .awaitSingleOrNull()
     }

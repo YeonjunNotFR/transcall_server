@@ -1,13 +1,12 @@
 package com.youhajun.transcall.pagination.cursor
 
-import org.springframework.data.relational.core.query.Criteria
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
 import java.util.*
 
 data class CreatedAtCursor(
     val createdAt: LocalDateTime,
-    val id: UUID
+    val id: Long
 ) : Cursor
 
 object CreatedAtCursorCodec : CursorCodec<CreatedAtCursor> {
@@ -24,23 +23,7 @@ object CreatedAtCursorCodec : CursorCodec<CreatedAtCursor> {
         val (createdAtStr, idStr) = decoded.split("|")
         return CreatedAtCursor(
             createdAt = LocalDateTime.parse(createdAtStr),
-            id = UUID.fromString(idStr)
+            id = idStr.toLong()
         )
     }
-}
-
-fun andCreatedAtCursor(
-    base: Criteria,
-    cursor: CreatedAtCursor?
-): Criteria {
-    if (cursor == null) return base
-
-    val cursorCondition = Criteria
-        .where("created_at").greaterThan(cursor.createdAt)
-        .or(
-            Criteria.where("created_at").`is`(cursor.createdAt)
-                .and(Criteria.where("id").greaterThan(cursor.id))
-        )
-
-    return base.and(cursorCondition)
 }

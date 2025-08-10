@@ -6,7 +6,7 @@ import java.util.*
 
 interface CallConversationService {
     suspend fun getCallConversations(
-        userPublicId: UUID,
+        userId: UUID,
         roomCode: UUID,
         after: String?,
         first: Int

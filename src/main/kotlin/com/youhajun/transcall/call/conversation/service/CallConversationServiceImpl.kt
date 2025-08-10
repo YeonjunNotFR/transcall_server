@@ -4,13 +4,12 @@ import com.youhajun.transcall.call.conversation.dto.ConversationResponse
 import com.youhajun.transcall.call.conversation.repository.CallConversationRepository
 import com.youhajun.transcall.call.conversation.repository.CallConversationTransRepository
 import com.youhajun.transcall.call.participant.service.CallParticipantService
-import com.youhajun.transcall.pagination.cursor.CreatedAtCursor
-import com.youhajun.transcall.pagination.cursor.CreatedAtCursorCodec
-import com.youhajun.transcall.pagination.dto.CursorPage
 import com.youhajun.transcall.pagination.CursorPaginationHelper
+import com.youhajun.transcall.pagination.cursor.UUIDCursor
+import com.youhajun.transcall.pagination.cursor.UUIDCursorCodec
+import com.youhajun.transcall.pagination.dto.CursorPage
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
-import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.*
 
@@ -23,29 +22,28 @@ class CallConversationServiceImpl(
 ) : CallConversationService {
 
     override suspend fun getCallConversations(
-        userPublicId: UUID,
+        userId: UUID,
         roomCode: UUID,
         after: String?,
         first: Int
     ): CursorPage<ConversationResponse> {
-        callParticipantService.checkCallParticipant(roomCode, userPublicId)
+        callParticipantService.checkCallParticipant(roomCode, userId)
 
         return CursorPaginationHelper.paginate(
             first = first,
             after = after,
-            codec = CreatedAtCursorCodec,
+            codec = UUIDCursorCodec,
             fetchFunc = { cursor, limit ->
                 val conversationList = conversationRepo.findPageByRoomCodeAndCursor(roomCode, cursor, limit)
-                val conversationIdList = conversationList.mapNotNull { it.id }
+                val conversationIdList = conversationList.map { it.id }
 
-                val transList = transConversationRepo.findByConversationIdsAndReceiverId(conversationIdList, userPublicId)
+                val transList = transConversationRepo.findByConversationIdsAndReceiverId(conversationIdList, userId)
                 val transMap = transList.associateBy { it.conversationId }
 
                 conversationList.map { conv ->
-                    val convId = requireNotNull(conv.id)
-                    val trans = transMap[convId]
+                    val trans = transMap[conv.id]
                     ConversationResponse(
-                        conversationId = convId,
+                        conversationId = conv.id,
                         senderId = conv.senderId,
                         originText = conv.originText,
                         originLanguage = conv.originLanguage,
@@ -56,8 +54,7 @@ class CallConversationServiceImpl(
                 }
             },
             convertItemToCursorFunc = { conversation ->
-                val createdAt = LocalDateTime.ofEpochSecond(conversation.createdAtToEpochTime, 0, ZoneOffset.UTC)
-                CreatedAtCursor(id = conversation.conversationId, createdAt = createdAt)
+                UUIDCursor(conversation.conversationId)
             },
         )
     }

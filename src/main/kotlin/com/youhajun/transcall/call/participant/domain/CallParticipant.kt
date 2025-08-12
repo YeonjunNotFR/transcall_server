@@ -1,43 +1,41 @@
 package com.youhajun.transcall.call.participant.domain
 
+import com.fasterxml.uuid.Generators
 import com.youhajun.transcall.call.participant.dto.CallParticipantResponse
-import com.youhajun.transcall.common.domain.BaseEntity
+import com.youhajun.transcall.common.domain.BaseUUIDEntity
 import com.youhajun.transcall.user.domain.LanguageType
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
+import java.time.LocalDateTime
 import java.util.*
 
 @Table("call_participant")
 data class CallParticipant(
     @Id
     @Column("id")
-    val id: UUID? = null,
-    @Column("room_code")
-    val roomCode: UUID,
-    @Column("user_public_id")
-    val userPublicId: UUID,
+    override val id: UUID = Generators.timeBasedEpochRandomGenerator().generate(),
+    @Column("room_id")
+    val roomId: UUID,
+    @Column("user_id")
+    val userId: UUID?,
     @Column("language")
-    val languageType: LanguageType,
+    val language: LanguageType,
     @Column("display_name")
     val displayName: String,
     @Column("profile_image_url")
     val profileImageUrl: String?,
-    @Column("history_title")
-    val historyTitle: String = "",
-    @Column("history_summary")
-    val historySummary: String = "",
-    @Column("history_memo")
-    val historyMemo: String = "",
-    @Column("history_liked")
-    val historyLiked: Boolean = false,
-    @Column("history_deleted")
-    val historyDeleted: Boolean = false,
-) : BaseEntity() {
+    @Column("joined_at")
+    val joinedAt: LocalDateTime,
+    @Column("left_at")
+    val leftAt: LocalDateTime? = null,
+    @Column("left_reason")
+    val leftReason: String? = null,
+) : BaseUUIDEntity() {
     fun toDto(): CallParticipantResponse = CallParticipantResponse(
-        participantId = requireNotNull(id),
+        participantId = id,
         displayName = displayName,
         profileImageUrl = profileImageUrl ?: "",
-        languageCode = languageType,
+        language = language,
     )
 }

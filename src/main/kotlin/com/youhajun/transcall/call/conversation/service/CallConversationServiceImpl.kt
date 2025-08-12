@@ -23,18 +23,18 @@ class CallConversationServiceImpl(
 
     override suspend fun getCallConversations(
         userId: UUID,
-        roomCode: UUID,
+        roomId: UUID,
         after: String?,
         first: Int
     ): CursorPage<ConversationResponse> {
-        callParticipantService.checkCallParticipant(roomCode, userId)
+        callParticipantService.checkCallParticipant(roomId = roomId, userId = userId)
 
         return CursorPaginationHelper.paginate(
             first = first,
             after = after,
             codec = UUIDCursorCodec,
             fetchFunc = { cursor, limit ->
-                val conversationList = conversationRepo.findPageByRoomCodeAndCursor(roomCode, cursor, limit)
+                val conversationList = conversationRepo.findPageByRoomIdAndCursor(roomId, cursor, limit)
                 val conversationIdList = conversationList.map { it.id }
 
                 val transList = transConversationRepo.findByConversationIdsAndReceiverId(conversationIdList, userId)

@@ -16,7 +16,7 @@ class CallConversationRepositoryCustomImpl(
 
     private val select = template.select<CallConversation>()
 
-    override suspend fun findPageByRoomCodeAndCursor(
+    override suspend fun findPageByRoomIdAndCursor(
         roomId: UUID,
         cursor: UUIDCursor?,
         limit: Int

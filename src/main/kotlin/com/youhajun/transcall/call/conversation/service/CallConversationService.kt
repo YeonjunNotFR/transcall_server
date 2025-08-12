@@ -7,7 +7,7 @@ import java.util.*
 interface CallConversationService {
     suspend fun getCallConversations(
         userId: UUID,
-        roomCode: UUID,
+        roomId: UUID,
         after: String?,
         first: Int
     ): CursorPage<ConversationResponse>

@@ -17,14 +17,14 @@ import java.util.*
 class CallConversationController(
     private val callConversationService: CallConversationService
 ) {
-    @GetMapping("/{roomCode}/conversations")
+    @GetMapping("/{roomId}/conversations")
     suspend fun getConversations(
         authentication: Authentication,
-        @NotBlank @PathVariable roomCode: UUID,
+        @NotBlank @PathVariable roomId: UUID,
         @RequestParam(required = false) after: String?,
         @Min(1) @RequestParam(defaultValue = "30") first: Int,
     ): CursorPage<ConversationResponse> {
         val principal = authentication.principal as UserPrincipal
-        return callConversationService.getCallConversations(principal.userId, roomCode, after, first)
+        return callConversationService.getCallConversations(principal.userId, roomId, after, first)
     }
 }

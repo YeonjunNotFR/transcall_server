@@ -1,6 +1,7 @@
 package com.youhajun.transcall.call.history.repository
 
 import com.youhajun.transcall.call.history.domain.CallHistory
+import com.youhajun.transcall.pagination.cursor.UUIDCursor
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.data.domain.Sort
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
@@ -15,9 +16,22 @@ class CallHistoryRepositoryCustomImpl(
 
     private val select = template.select<CallHistory>()
 
-    override suspend fun findByRoomCodeIn(roomCodes: List<UUID>): List<CallHistory> {
-        val criteria = Criteria.where("room_code").`in`(roomCodes)
-        return select.matching(Query.query(criteria))
+    override suspend fun findPageByUserIdAndCursor(
+        userId: UUID,
+        cursor: UUIDCursor?,
+        limit: Int
+    ): List<CallHistory> {
+        val base = Criteria.where("user_id").`is`(userId)
+        val criteria = cursor?.let {
+            base.and("id").lessThan(it.uuid)
+        } ?: base
+
+        return select
+            .matching(
+                Query.query(criteria)
+                    .sort(Sort.by(Sort.Direction.DESC, "id"))
+                    .limit(limit)
+            )
             .all()
             .collectList()
             .awaitSingleOrNull() ?: emptyList()

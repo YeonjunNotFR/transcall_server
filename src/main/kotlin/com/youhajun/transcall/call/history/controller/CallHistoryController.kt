@@ -23,9 +23,8 @@ class CallHistoryController(
         authentication: Authentication,
         @RequestParam(required = false) after: String?,
         @Min(1) @RequestParam(defaultValue = "30") first: Int,
-
-        ): CursorPage<CallHistoryResponse> {
+    ): CursorPage<CallHistoryResponse> {
         val principal = authentication.principal as UserPrincipal
-        return callHistoryService.getCallHistories(principal.userPublicId, after, first)
+        return callHistoryService.getCallHistories(principal.userId, after, first)
     }
 }

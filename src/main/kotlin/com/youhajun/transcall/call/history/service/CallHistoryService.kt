@@ -5,5 +5,5 @@ import com.youhajun.transcall.pagination.dto.CursorPage
 import java.util.*
 
 interface CallHistoryService {
-    suspend fun getCallHistories(userPublicId: UUID, after: String?, first: Int): CursorPage<CallHistoryResponse>
+    suspend fun getCallHistories(userId: UUID, after: String?, first: Int): CursorPage<CallHistoryResponse>
 }

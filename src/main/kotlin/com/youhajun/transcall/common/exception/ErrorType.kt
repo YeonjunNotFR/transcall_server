@@ -13,5 +13,6 @@ enum class ErrorType(val httpStatus: HttpStatus, val status: String, val message
     NONCE_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "NONCE_SAVE_FAILED", "Nonce 저장에 실패했습니다."),
     NONCE_NOT_FOUND(HttpStatus.NOT_FOUND, "NONCE_NOT_FOUND", "Nonce를 찾을 수 없습니다."),
     FORBIDDEN_CALL_NOT_JOIN(HttpStatus.FORBIDDEN, "FORBIDDEN_CALL_NOT_JOIN", "참여하지 않은 통화입니다."),
-    CALL_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CALL_HISTORY_NOT_FOUND", "통화 기록을 찾을 수 없습니다.")
+    CALL_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CALL_HISTORY_NOT_FOUND", "통화 기록을 찾을 수 없습니다."),
+    ROOM_CODE_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "ROOM_CODE_GENERATION_FAILED", "방 코드 생성에 실패했습니다."),
 }

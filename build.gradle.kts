@@ -47,6 +47,8 @@ dependencies {
 	runtimeOnly("org.postgresql:postgresql")
 
 	implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
+
+	implementation("org.springframework.data:spring-data-commons")
 }
 
 kotlin {

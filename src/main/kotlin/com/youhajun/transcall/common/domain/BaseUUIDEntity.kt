@@ -8,9 +8,9 @@ abstract class BaseUUIDEntity : Persistable<UUID>, BaseEntity() {
     @Transient
     private var isNewEntity: Boolean = true
 
-    abstract val id: UUID
+    abstract val uuid: UUID
 
-    override fun getId(): UUID = id
+    override fun getId(): UUID = uuid
 
     override fun isNew(): Boolean = isNewEntity
 

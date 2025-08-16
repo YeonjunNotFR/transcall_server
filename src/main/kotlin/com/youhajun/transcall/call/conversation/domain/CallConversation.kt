@@ -12,7 +12,7 @@ import java.util.*
 data class CallConversation(
     @Id
     @Column("id")
-    override val id: UUID = Generators.timeBasedEpochRandomGenerator().generate(),
+    override val uuid: UUID = Generators.timeBasedEpochRandomGenerator().generate(),
     @Column("room_id")
     val roomId: UUID,
     @Column("sender_id")

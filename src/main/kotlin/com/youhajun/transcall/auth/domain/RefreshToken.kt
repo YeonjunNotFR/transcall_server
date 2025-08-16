@@ -12,7 +12,7 @@ import java.util.*
 data class RefreshToken(
     @Id
     @Column("id")
-    override val id: UUID = Generators.timeBasedEpochRandomGenerator().generate(),
+    override val uuid: UUID = Generators.timeBasedEpochRandomGenerator().generate(),
     @Column("token")
     val token: String,
     @Column("user_id")

@@ -13,7 +13,7 @@ import java.util.*
 data class User(
     @Id
     @Column("id")
-    override val id: UUID = Generators.timeBasedEpochRandomGenerator().generate(),
+    override val uuid: UUID = Generators.timeBasedEpochRandomGenerator().generate(),
     @Column("email")
     val email: String,
     @Column("social_type")

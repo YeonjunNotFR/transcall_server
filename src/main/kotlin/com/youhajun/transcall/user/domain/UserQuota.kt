@@ -16,7 +16,7 @@ import java.util.*
 data class UserQuota(
     @Id
     @Column("id")
-    override val id: UUID = Generators.timeBasedEpochRandomGenerator().generate(),
+    override val uuid: UUID = Generators.timeBasedEpochRandomGenerator().generate(),
     @Column("user_id")
     val userId: UUID,
     @Column("remaining_seconds")

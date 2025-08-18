@@ -6,4 +6,4 @@ import org.springframework.stereotype.Repository
 import java.util.*
 
 @Repository
-interface UserQuotaRepository : CoroutineCrudRepository<UserQuota, UUID>
+interface UserQuotaRepository : CoroutineCrudRepository<UserQuota, UUID>, UserQuotaRepositoryCustom

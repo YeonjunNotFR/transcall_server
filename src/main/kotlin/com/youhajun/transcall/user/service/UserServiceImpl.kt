@@ -36,7 +36,7 @@ class UserServiceImpl(
     }
 
     override suspend fun getMyInfo(userId: UUID): MyInfoResponse {
-        val userQuota = userQuotaRepository.findById(userId) ?: throw UserException.UserQuotaNotFoundException()
+        val userQuota = userQuotaRepository.findByUserId(userId)
         return findUserById(userId).toMyInfoResponse(userQuota.toRemainTimeResponse())
     }
 

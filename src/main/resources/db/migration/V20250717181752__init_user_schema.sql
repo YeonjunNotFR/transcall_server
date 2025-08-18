@@ -29,5 +29,7 @@ CREATE TABLE IF NOT EXISTS user_quotas
     user_id           UUID      NOT NULL UNIQUE,
     remaining_seconds BIGINT    NOT NULL,
     reset_at          TIMESTAMP NOT NULL,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_quota_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );

@@ -38,7 +38,7 @@ class CallHistoryServiceImpl(
                     val participants = roomParticipants.getTimelineFiltered(historyStart, historyEnd)
 
                     CallHistoryResponse(
-                        historyId = history.id,
+                        historyId = history.id.toString(),
                         joinedAtToEpochTime = history.joinedAt.toEpochSecond(ZoneOffset.UTC),
                         leftAtToEpochTime = history.leftAt?.toEpochSecond(ZoneOffset.UTC),
                         participants = participants.map { it.toDto() },
@@ -50,7 +50,7 @@ class CallHistoryServiceImpl(
                 }
             },
             convertItemToCursorFunc = {
-                UUIDCursor(it.historyId)
+                UUIDCursor(UUID.fromString(it.historyId))
             },
         )
     }

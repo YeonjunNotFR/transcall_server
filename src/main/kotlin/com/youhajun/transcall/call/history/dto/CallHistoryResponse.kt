@@ -1,10 +1,9 @@
 package com.youhajun.transcall.call.history.dto
 
 import com.youhajun.transcall.call.participant.dto.CallParticipantResponse
-import java.util.*
 
 data class CallHistoryResponse(
-    val historyId: UUID,
+    val historyId: String,
     val title: String,
     val summary: String,
     val memo: String,

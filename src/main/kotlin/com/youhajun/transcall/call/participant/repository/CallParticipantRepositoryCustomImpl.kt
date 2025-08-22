@@ -30,4 +30,21 @@ class CallParticipantRepositoryCustomImpl(
             .collectList()
             .awaitSingleOrNull() ?: emptyList()
     }
+
+    override suspend fun findCurrentParticipantsByRoomId(roomId: UUID): List<CallParticipant> {
+        val criteria = Criteria.where("room_id").`is`(roomId).and("left_at").isNull
+        return select
+            .matching(Query.query(criteria))
+            .all()
+            .collectList()
+            .awaitSingleOrNull() ?: emptyList()
+    }
+
+    override suspend fun currentCountByRoomId(roomId: UUID): Long {
+        val criteria = Criteria.where("room_id").`is`(roomId).and("left_at").isNull
+        return select
+            .matching(Query.query(criteria))
+            .count()
+            .awaitSingleOrNull() ?: 0L
+    }
 }

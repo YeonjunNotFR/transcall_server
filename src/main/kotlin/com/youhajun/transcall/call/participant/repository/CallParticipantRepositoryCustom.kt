@@ -7,4 +7,8 @@ interface CallParticipantRepositoryCustom {
     suspend fun existsByRoomIdAndUserId(roomId: UUID, userId: UUID): Boolean
 
     suspend fun findAllByRoomIdIn(roomIds: List<UUID>): List<CallParticipant>
+
+    suspend fun findCurrentParticipantsByRoomId(roomId: UUID): List<CallParticipant>
+
+    suspend fun currentCountByRoomId(roomId: UUID): Long
 }

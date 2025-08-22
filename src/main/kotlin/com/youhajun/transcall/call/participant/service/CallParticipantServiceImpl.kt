@@ -36,4 +36,12 @@ class CallParticipantServiceImpl(
     override suspend fun findCallParticipantsGroupedByRoomId(roomIds: List<UUID>): Map<UUID, List<CallParticipant>> {
         return callParticipantRepository.findAllByRoomIdIn(roomIds).groupBy { it.roomId }
     }
+
+    override suspend fun findCurrentCallParticipants(roomId: UUID): List<CallParticipant> {
+        return callParticipantRepository.findCurrentParticipantsByRoomId(roomId)
+    }
+
+    override suspend fun currentCountByRoomId(roomId: UUID): Long {
+        return callParticipantRepository.currentCountByRoomId(roomId)
+    }
 }

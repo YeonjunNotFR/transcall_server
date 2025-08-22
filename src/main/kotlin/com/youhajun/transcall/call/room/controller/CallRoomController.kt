@@ -19,8 +19,8 @@ class CallRoomController(
     suspend fun createRoom(
         authentication: Authentication,
         @RequestBody request: CreateRoomRequest
-    ): UUID {
+    ): String {
         val principal = authentication.principal as UserPrincipal
-        return callRoomService.createRoom(principal.userId, request)
+        return callRoomService.createRoom(principal.userId, request).toString()
     }
 }

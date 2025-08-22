@@ -33,7 +33,7 @@ data class CallParticipant(
     val leftReason: String? = null,
 ) : BaseUUIDEntity() {
     fun toDto(): CallParticipantResponse = CallParticipantResponse(
-        participantId = id,
+        participantId = id.toString(),
         displayName = displayName,
         profileImageUrl = profileImageUrl ?: "",
         language = language,

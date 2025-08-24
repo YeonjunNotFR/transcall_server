@@ -5,4 +5,5 @@ import com.youhajun.transcall.common.exception.TransCallException
 
 sealed class RoomException(errorType: ErrorType) : TransCallException(errorType) {
     class RoomCodeGenerationFailed : RoomException(ErrorType.ROOM_CODE_GENERATION_FAILED)
+    class RoomNotFound : RoomException(ErrorType.ROOM_NOT_FOUND)
 }

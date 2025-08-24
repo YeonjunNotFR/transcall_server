@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonCreator
 enum class RoomStatus(val type: String) {
     WAITING("waiting"),
     IN_PROGRESS("in_progress"),
-    ENDED("ended"),;
+    ENDED("ended");
 
     companion object {
         @JvmStatic

@@ -22,6 +22,7 @@ server:
 
 # 필요시 로그 레벨 설정 (개발 중 debug)
 logging:
+  config: classpath:log4j2.xml
   level:
     org.springframework.security: INFO
     io.jsonwebtoken: DEBUG

@@ -18,8 +18,13 @@ repositories {
 	mavenCentral()
 }
 
+configurations.all {
+	exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
+}
+
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter")
+	implementation("org.springframework.boot:spring-boot-starter-log4j2:3.1.5")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
 	implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
@@ -49,6 +54,7 @@ dependencies {
 	implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
 
 	implementation("org.springframework.data:spring-data-commons")
+	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 }
 
 kotlin {

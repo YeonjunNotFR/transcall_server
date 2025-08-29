@@ -1,3 +1,11 @@
+CREATE SEQUENCE janus_room_id_seq
+    AS BIGINT
+    START WITH 100000
+    INCREMENT BY 1
+    MINVALUE 100000
+    NO MAXVALUE
+    CACHE 100;
+
 CREATE TABLE IF NOT EXISTS call_room
 (
     id               UUID        NOT NULL PRIMARY KEY,
@@ -8,11 +16,15 @@ CREATE TABLE IF NOT EXISTS call_room
     visibility       VARCHAR(20) NOT NULL,
     tags             VARCHAR(50)[],
     status           VARCHAR(20) NOT NULL,
+    join_type        VARCHAR(20) NOT NULL,
+    janus_room_id    BIGINT      NOT NULL UNIQUE DEFAULT nextval('janus_room_id_seq'),
     created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_callroom_host_user FOREIGN KEY (host_id) REFERENCES users (id) ON DELETE SET NULL
 );
+
+ALTER SEQUENCE janus_room_id_seq OWNED BY call_room.janus_room_id;
 
 CREATE TABLE call_conversation
 (

@@ -6,8 +6,8 @@ import com.youhajun.transcall.janus.dto.video.response.VideoRoomResponseType
 
 data class OnNewPublisher(
     @JsonProperty("videoroom")
-    val videoRoom: VideoRoomResponseType,
+    override val videoRoom: VideoRoomResponseType,
     @JsonProperty("room")
     val roomId: String,
-    val publishers: List<JanusPublisherResponse> = emptyList(),
+    val publishers: List<JanusPublisherResponse> = emptyList()
 ): VideoRoomEvent

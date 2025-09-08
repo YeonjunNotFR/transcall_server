@@ -6,7 +6,7 @@ import com.youhajun.transcall.janus.dto.JanusResponseType
 import com.youhajun.transcall.janus.dto.plugin.JanusPluginData
 import com.youhajun.transcall.janus.dto.video.VideoRoomJsep
 
-data class JanusPluginEvent<T : VideoRoomEvent>(
+data class JanusPluginEvent<T : PluginEvent>(
     @JsonProperty("session_id")
     val sessionId: Long,
     @JsonProperty("sender")
@@ -17,5 +17,3 @@ data class JanusPluginEvent<T : VideoRoomEvent>(
 ) : BaseJanusResponse, JanusEvent {
     override val janus: JanusResponseType = JanusResponseType.EVENT
 }
-
-sealed interface VideoRoomEvent

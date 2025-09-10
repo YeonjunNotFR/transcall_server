@@ -9,7 +9,7 @@ data class JoinSubscriberRequestBody(
     val janusRoomId: Long,
     @JsonProperty("private_id")
     val privateId: Long?,
-    val streams: List<StreamInfoRequest>,
+    val streams: List<SubscribeStreamRequest>,
     @JsonProperty("autoupdate")
     val autoUpdate: Boolean = true,
 ) {

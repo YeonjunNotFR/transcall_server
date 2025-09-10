@@ -6,5 +6,5 @@ data class JoinSubscriberResponse(
     @JsonProperty("videoroom")
     val videoRoom: VideoRoomResponseType,
     val room: String,
-    val streams: List<StreamInfoResponse> = emptyList(),
+    val streams: List<SubscribeStreamResponse> = emptyList(),
 )

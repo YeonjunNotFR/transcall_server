@@ -7,5 +7,5 @@ data class JanusPublisherResponse(
     val feedId: Long,
     val display: String? = null,
     val metadata: Map<String, Any>? = null,
-    val streams: List<StreamInfoResponse> = emptyList(),
+    val streams: List<PublishStreamResponse> = emptyList(),
 )

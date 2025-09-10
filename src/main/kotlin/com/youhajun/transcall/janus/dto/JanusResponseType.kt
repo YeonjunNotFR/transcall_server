@@ -20,7 +20,6 @@ enum class JanusResponseType(val value: String) {
     companion object {
         @JvmStatic
         @JsonCreator
-        fun from(value: String?): JanusResponseType =
-            entries.firstOrNull { it.value == value } ?: throw IllegalArgumentException("Unknown janus response type: $value")
+        fun from(value: String?): JanusResponseType? = entries.firstOrNull { it.value == value }
     }
 }

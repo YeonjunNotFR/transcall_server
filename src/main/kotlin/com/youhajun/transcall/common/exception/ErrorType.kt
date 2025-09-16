@@ -16,4 +16,5 @@ enum class ErrorType(val httpStatus: HttpStatus, val status: String, val message
     CALL_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CALL_HISTORY_NOT_FOUND", "통화 기록을 찾을 수 없습니다."),
     ROOM_CODE_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "ROOM_CODE_GENERATION_FAILED", "방 코드 생성에 실패했습니다."),
     ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "ROOM_NOT_FOUND", "방을 찾을 수 없습니다."),
+    ROOM_IS_FULL(HttpStatus.FORBIDDEN, "ROOM_IS_FULL", "방이 가득 찼습니다."),
 }

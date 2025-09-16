@@ -10,5 +10,7 @@ interface CallParticipantRepositoryCustom {
 
     suspend fun findCurrentParticipantsByRoomId(roomId: UUID): List<CallParticipant>
 
-    suspend fun currentCountByRoomId(roomId: UUID): Long
+    suspend fun currentCountByRoomId(roomId: UUID): Int
+
+    suspend fun leaveCallParticipant(roomId: UUID, userId: UUID): Boolean
 }

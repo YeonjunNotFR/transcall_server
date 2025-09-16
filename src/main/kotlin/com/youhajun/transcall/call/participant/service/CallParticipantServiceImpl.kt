@@ -14,12 +14,12 @@ class CallParticipantServiceImpl(
     private val userService: UserService
 ) : CallParticipantService {
 
-    override suspend fun checkCallParticipant(userId: UUID, roomId: UUID) {
+    override suspend fun checkCallParticipant(roomId: UUID, userId: UUID) {
         val roomJoined = callParticipantRepository.existsByRoomIdAndUserId(roomId = roomId, userId = userId)
         if (!roomJoined) throw CallException.ForbiddenCallNotJoin()
     }
 
-    override suspend fun joinCallParticipant(userId: UUID, roomId: UUID) {
+    override suspend fun joinCallParticipant(roomId: UUID, userId: UUID) {
         val user = userService.findUserById(userId)
         val participant = CallParticipant(
             roomId = roomId,
@@ -33,6 +33,10 @@ class CallParticipantServiceImpl(
         callParticipantRepository.save(participant)
     }
 
+    override suspend fun leaveCallParticipant(roomId: UUID, userId: UUID) {
+        callParticipantRepository.leaveCallParticipant(roomId, userId)
+    }
+
     override suspend fun findCallParticipantsGroupedByRoomId(roomIds: List<UUID>): Map<UUID, List<CallParticipant>> {
         return callParticipantRepository.findAllByRoomIdIn(roomIds).groupBy { it.roomId }
     }
@@ -41,7 +45,7 @@ class CallParticipantServiceImpl(
         return callParticipantRepository.findCurrentParticipantsByRoomId(roomId)
     }
 
-    override suspend fun currentCountByRoomId(roomId: UUID): Long {
+    override suspend fun currentCountByRoomId(roomId: UUID): Int {
         return callParticipantRepository.currentCountByRoomId(roomId)
     }
 }

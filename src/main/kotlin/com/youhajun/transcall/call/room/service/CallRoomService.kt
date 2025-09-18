@@ -9,4 +9,6 @@ interface CallRoomService {
     suspend fun isRoomFull(roomId: UUID): Boolean
     suspend fun getRoomInfo(roomId: UUID): RoomInfoResponse
     suspend fun getJanusRoomId(roomId: UUID): Long
+    suspend fun joinRoomByCode(userId: UUID, roomCode: String): RoomInfoResponse
+    suspend fun updateRoomStatus(roomId: UUID): Boolean
 }

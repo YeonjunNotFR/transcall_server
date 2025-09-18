@@ -3,6 +3,7 @@ package com.youhajun.transcall.call.room.service
 import com.youhajun.transcall.call.participant.service.CallParticipantService
 import com.youhajun.transcall.call.room.domain.CallRoom
 import com.youhajun.transcall.call.room.domain.RoomJoinType
+import com.youhajun.transcall.call.room.domain.RoomStatus
 import com.youhajun.transcall.call.room.dto.CreateRoomRequest
 import com.youhajun.transcall.call.room.dto.RoomInfoResponse
 import com.youhajun.transcall.call.room.exception.RoomException
@@ -53,6 +54,13 @@ class CallRoomServiceImpl(
         }
     }
 
+    override suspend fun joinRoomByCode(userId: UUID, roomCode: String): RoomInfoResponse {
+        val room = callRoomRepository.findByRoomCode(roomCode) ?: throw RoomException.RoomNotFound()
+        if(isRoomFull(room.id)) throw RoomException.RoomIsFull()
+
+        return room.toDto()
+    }
+
     override suspend fun isRoomFull(roomId: UUID): Boolean {
         val room = callRoomRepository.findById(roomId) ?: throw RoomException.RoomNotFound()
         val participantCount = callParticipantService.currentCountByRoomId(roomId)
@@ -74,6 +82,15 @@ class CallRoomServiceImpl(
         return janusRoomId
     }
 
+    override suspend fun updateRoomStatus(roomId: UUID): Boolean {
+        val count = callParticipantService.currentCountByRoomId(roomId)
+        val status = when(count) {
+            0 -> RoomStatus.ENDED
+            1 -> RoomStatus.WAITING
+            else -> RoomStatus.IN_PROGRESS
+        }
+        return callRoomRepository.updateRoomStatus(roomId, status)
+    }
 
     private suspend fun generateUniqueRoomCode(): String {
         repeat(10) {

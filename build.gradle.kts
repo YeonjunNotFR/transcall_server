@@ -48,7 +48,8 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 
-	implementation("org.flywaydb:flyway-database-postgresql:11.10.2")
+	implementation("org.flywaydb:flyway-core:11.13.2")
+	implementation("org.flywaydb:flyway-database-postgresql:11.13.2")
 	runtimeOnly("org.postgresql:postgresql")
 
 	implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")

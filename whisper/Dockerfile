@@ -1,0 +1,72 @@
+FROM python:3.13-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+
+ENV BACKEND=simulstreaming
+ENV LANGUAGE=ko
+ENV PORT=2001
+ENV MODEL=tiny
+ENV PCM_INPUT=true
+
+WORKDIR /app
+
+ARG EXTRAS
+ARG HF_PRECACHE_DIR
+ARG HF_TKN_FILE
+ARG EXTRA_PIP_PACKAGES
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ffmpeg \
+        git \
+        build-essential \
+        python3-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install CPU-only PyTorch
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+COPY . .
+
+# Install WhisperLiveKit directly, allowing for optional dependencies
+RUN if [ -n "$EXTRAS" ]; then \
+      echo "Installing whisperlivekit with extras: [$EXTRAS]"; \
+      pip install --no-cache-dir whisperlivekit[$EXTRAS]; \
+    else \
+      echo "Installing whisperlivekit base"; \
+      pip install --no-cache-dir whisperlivekit; \
+    fi && \
+    if [ -n "$EXTRA_PIP_PACKAGES" ]; then \
+      echo "Installing extra pip packages: [$EXTRA_PIP_PACKAGES]"; \
+      pip install --no-cache-dir $EXTRA_PIP_PACKAGES; \
+    fi
+
+# Enable in-container caching for Hugging Face models
+VOLUME ["/root/.cache/huggingface/hub"]
+
+# Conditionally copy a local pre-cache from the build context
+RUN if [ -n "$HF_PRECACHE_DIR" ]; then \
+      echo "Copying Hugging Face cache from $HF_PRECACHE_DIR"; \
+      mkdir -p /root/.cache/huggingface/hub && \
+      cp -r $HF_PRECACHE_DIR/* /root/.cache/huggingface/hub; \
+    else \
+      echo "No local Hugging Face cache specified, skipping copy"; \
+    fi
+
+# Conditionally copy a Hugging Face token if provided
+RUN if [ -n "$HF_TKN_FILE" ]; then \
+      echo "Copying Hugging Face token from $HF_TKN_FILE"; \
+      mkdir -p /root/.cache/huggingface && \
+      cp $HF_TKN_FILE /root/.cache/huggingface/token; \
+    else \
+      echo "No Hugging Face token file specified, skipping token setup"; \
+    fi
+
+ENTRYPOINT ["sh", "-c", "whisperlivekit-server \
+  --host 0.0.0.0 \
+  --backend $BACKEND \
+  --language $LANGUAGE \
+  ${PCM_INPUT:+--pcm-input} \
+  --model $MODEL \
+  --port $PORT"]

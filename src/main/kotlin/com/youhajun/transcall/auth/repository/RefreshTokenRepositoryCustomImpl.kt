@@ -8,8 +8,10 @@ import org.springframework.data.r2dbc.core.delete
 import org.springframework.data.r2dbc.core.select
 import org.springframework.data.relational.core.query.Criteria
 import org.springframework.data.relational.core.query.Query
+import org.springframework.stereotype.Repository
 import java.util.*
 
+@Repository
 class RefreshTokenRepositoryCustomImpl(
     template: R2dbcEntityTemplate
 ) : RefreshTokenRepositoryCustom {

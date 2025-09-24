@@ -1,9 +1,9 @@
 package com.youhajun.transcall.auth.jwt
 
 import com.youhajun.transcall.auth.domain.RefreshToken
-import com.youhajun.transcall.common.domain.UserPrincipal
 import com.youhajun.transcall.auth.dto.JwtTokenResponse
 import com.youhajun.transcall.auth.exception.AuthException
+import com.youhajun.transcall.common.domain.UserPrincipal
 import com.youhajun.transcall.user.domain.User
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
@@ -14,7 +14,7 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.stereotype.Component
 import java.security.Key
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.*
 
 @Component
@@ -56,7 +56,7 @@ class JwtProvider(
     }
 
     fun validateRefreshToken(refreshToken: RefreshToken) {
-        if (refreshToken.expireAt.isBefore(LocalDateTime.now())) {
+        if (refreshToken.expireAt.isBefore(Instant.now())) {
             throw AuthException.JwtExpiredException()
         }
     }

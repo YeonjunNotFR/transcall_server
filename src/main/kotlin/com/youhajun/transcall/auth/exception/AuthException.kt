@@ -11,4 +11,5 @@ sealed class AuthException(errorType: ErrorType): TransCallException(errorType) 
     class EmailNotVerifiedException : AuthException(ErrorType.EMAIL_NOT_VERIFIED)
     class NonceSaveFailedException : AuthException(ErrorType.NONCE_SAVE_FAILED)
     class NonceNotFoundException : AuthException(ErrorType.NONCE_NOT_FOUND)
+    class UserNotFoundException : AuthException(ErrorType.USER_NOT_FOUND)
 }

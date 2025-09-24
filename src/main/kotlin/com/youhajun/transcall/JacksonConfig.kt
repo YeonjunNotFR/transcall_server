@@ -2,7 +2,8 @@ package com.youhajun.transcall
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import jakarta.annotation.PostConstruct
 import org.springframework.context.annotation.Configuration
 
@@ -13,7 +14,8 @@ class JacksonConfig(
     @PostConstruct
     fun customize() {
         objectMapper
-            .registerModule(KotlinModule.Builder().build())
+            .registerKotlinModule()
+            .registerModule(JavaTimeModule())
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
 }

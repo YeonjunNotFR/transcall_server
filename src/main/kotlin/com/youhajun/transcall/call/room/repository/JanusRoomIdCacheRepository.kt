@@ -1,10 +1,8 @@
 package com.youhajun.transcall.call.room.repository
 
-import org.springframework.stereotype.Repository
-import java.util.*
 import java.time.Duration
+import java.util.*
 
-@Repository
 interface JanusRoomIdCacheRepository {
 
     suspend fun saveJanusRoomId(roomId: UUID, janusRoomId: Long, ttl: Duration): Boolean

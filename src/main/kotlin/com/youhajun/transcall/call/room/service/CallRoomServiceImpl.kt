@@ -5,12 +5,19 @@ import com.youhajun.transcall.call.room.domain.CallRoom
 import com.youhajun.transcall.call.room.domain.RoomJoinType
 import com.youhajun.transcall.call.room.domain.RoomStatus
 import com.youhajun.transcall.call.room.dto.CreateRoomRequest
+import com.youhajun.transcall.call.room.dto.OngoingRoomInfoResponse
 import com.youhajun.transcall.call.room.dto.RoomInfoResponse
 import com.youhajun.transcall.call.room.exception.RoomException
 import com.youhajun.transcall.call.room.repository.CallRoomRepository
 import com.youhajun.transcall.call.room.repository.JanusRoomIdCacheRepository
-import com.youhajun.transcall.janus.dto.video.request.CreateVideoRoomRequest
-import com.youhajun.transcall.janus.service.JanusVideoRoomService
+import com.youhajun.transcall.client.janus.dto.video.request.CreateVideoRoomRequest
+import com.youhajun.transcall.client.janus.service.JanusVideoRoomService
+import com.youhajun.transcall.common.vo.SortDirection
+import com.youhajun.transcall.pagination.CursorPaginationHelper
+import com.youhajun.transcall.pagination.cursor.UUIDCursor
+import com.youhajun.transcall.pagination.cursor.UUIDCursorCodec
+import com.youhajun.transcall.pagination.dto.CursorPage
+import com.youhajun.transcall.pagination.vo.CursorPagination
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
@@ -23,12 +30,12 @@ class CallRoomServiceImpl(
     private val callRoomRepository: CallRoomRepository,
     private val janusRoomIdCacheRepository: JanusRoomIdCacheRepository,
     private val callParticipantService: CallParticipantService,
-    private val janusVideoRoomService: JanusVideoRoomService
+    private val janusVideoRoomService: JanusVideoRoomService,
 ) : CallRoomService {
 
     companion object {
         private val JANUS_ROOM_ID_CACHE_TTL = Duration.ofHours(24)
-        private const val ROOM_CODE_LENGTH = 8
+        private const val ROOM_CODE_LENGTH = 5
     }
 
     override suspend fun createRoom(userId: UUID, request: CreateRoomRequest): UUID {
@@ -37,6 +44,7 @@ class CallRoomServiceImpl(
                 hostId = userId,
                 title = request.title,
                 maxParticipants = request.maxParticipantCount,
+                currentParticipantsCount = 0,
                 visibility = request.visibility,
                 tags = request.tags,
                 roomCode = generateUniqueRoomCode(),
@@ -54,11 +62,18 @@ class CallRoomServiceImpl(
         }
     }
 
-    override suspend fun joinRoomByCode(userId: UUID, roomCode: String): RoomInfoResponse {
+    override suspend fun joinRoomCheckByCode(userId: UUID, roomCode: String): RoomInfoResponse {
         val room = callRoomRepository.findByRoomCode(roomCode) ?: throw RoomException.RoomNotFound()
         if(isRoomFull(room.id)) throw RoomException.RoomIsFull()
 
-        return room.toDto()
+        return room.toRoomInfoResponse()
+    }
+
+    override suspend fun updateCurrentParticipantCount(roomId: UUID) {
+        transactionalOperator.executeAndAwait {
+            val count = callParticipantService.currentCountByRoomId(roomId)
+            callRoomRepository.updateCurrentParticipantCount(roomId, count)
+        }
     }
 
     override suspend fun isRoomFull(roomId: UUID): Boolean {
@@ -68,28 +83,73 @@ class CallRoomServiceImpl(
     }
 
     override suspend fun getRoomInfo(roomId: UUID): RoomInfoResponse {
-        return callRoomRepository.findById(roomId)?.toDto() ?: throw RoomException.RoomNotFound()
+        return callRoomRepository.findById(roomId)?.toRoomInfoResponse() ?: throw RoomException.RoomNotFound()
+    }
+
+    override suspend fun getOngoingRoomInfo(roomId: UUID): OngoingRoomInfoResponse {
+        val room = callRoomRepository.findById(roomId) ?: throw RoomException.RoomNotFound()
+        val participants = callParticipantService.findCurrentParticipants(roomId)
+        return room.toOngoingRoomInfoResponse(participants)
+    }
+
+    override suspend fun getOngoingRoomList(
+        createdAtSort: SortDirection,
+        participantSort: SortDirection,
+        pagination: CursorPagination
+    ): CursorPage<OngoingRoomInfoResponse> {
+        return CursorPaginationHelper.paginate(
+            cursorPagination = pagination,
+            codec = UUIDCursorCodec,
+            fetchFunc = { cursor, limit ->
+                getOngoingRoomInfoResponse(participantSort, createdAtSort, cursor, limit)
+            },
+            convertItemToCursorFunc = {
+                UUIDCursor(UUID.fromString(it.roomInfo.roomId))
+            },
+        )
     }
 
     override suspend fun getJanusRoomId(roomId: UUID): Long {
-        janusRoomIdCacheRepository.getJanusRoomId(roomId)?.let { cachedId ->
-            return cachedId
-        }
+        return transactionalOperator.executeAndAwait {
+            janusRoomIdCacheRepository.getJanusRoomId(roomId)?.let { cachedId ->
+                return@executeAndAwait cachedId
+            }
 
-        val room = callRoomRepository.findById(roomId) ?: throw RoomException.RoomNotFound()
-        val janusRoomId = room.requireJanusRoomId()
-        janusRoomIdCacheRepository.saveJanusRoomId(roomId, janusRoomId, JANUS_ROOM_ID_CACHE_TTL)
-        return janusRoomId
+            val room = callRoomRepository.findById(roomId) ?: throw RoomException.RoomNotFound()
+            return@executeAndAwait room.requireJanusRoomId().also {
+                janusRoomIdCacheRepository.saveJanusRoomId(roomId, it, JANUS_ROOM_ID_CACHE_TTL)
+            }
+        }
     }
 
-    override suspend fun updateRoomStatus(roomId: UUID): Boolean {
-        val count = callParticipantService.currentCountByRoomId(roomId)
-        val status = when(count) {
-            0 -> RoomStatus.ENDED
-            1 -> RoomStatus.WAITING
-            else -> RoomStatus.IN_PROGRESS
+    override suspend fun updateRoomStatus(roomId: UUID) {
+        transactionalOperator.executeAndAwait {
+            val count = callParticipantService.currentCountByRoomId(roomId)
+            val status = when(count) {
+                0 -> RoomStatus.ENDED
+                1 -> RoomStatus.WAITING
+                else -> RoomStatus.IN_PROGRESS
+            }
+            callRoomRepository.updateRoomStatus(roomId, status)
         }
-        return callRoomRepository.updateRoomStatus(roomId, status)
+    }
+
+    private suspend fun getOngoingRoomInfoResponse(
+        participantSort: SortDirection,
+        createdAtSort: SortDirection,
+        cursor: UUIDCursor?,
+        limit: Int
+    ): List<OngoingRoomInfoResponse> {
+        val roomList = callRoomRepository.findOngoingRoomList(participantSort, createdAtSort, cursor, limit)
+        val roomIds = roomList.map { it.id }
+        val currentParticipantsGroup = callParticipantService.findCurrentParticipantsGroupByRoomIds(roomIds)
+        return roomList.map { roomInfo ->
+            val participants = currentParticipantsGroup[roomInfo.id]
+                ?.sortedByDescending { it.createdAt }
+                ?: emptyList()
+
+            roomInfo.toOngoingRoomInfoResponse(participants)
+        }
     }
 
     private suspend fun generateUniqueRoomCode(): String {

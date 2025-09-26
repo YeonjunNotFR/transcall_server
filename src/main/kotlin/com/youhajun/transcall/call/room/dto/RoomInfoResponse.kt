@@ -9,8 +9,11 @@ data class RoomInfoResponse(
     val roomCode: String,
     val title: String,
     val maxParticipantCount: Int,
+    val currentParticipantCount: Int,
     val visibility: RoomVisibility,
     val joinType: RoomJoinType,
     val tags: Set<String>,
     val status: RoomStatus,
+    val hostId: String,
+    val createdAtToEpochTime: Long
 )

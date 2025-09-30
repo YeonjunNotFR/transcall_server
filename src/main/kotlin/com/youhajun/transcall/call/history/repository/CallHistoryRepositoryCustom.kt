@@ -10,4 +10,6 @@ interface CallHistoryRepositoryCustom {
         cursor: UUIDCursor?,
         limit: Int
     ): List<CallHistory>
+
+    suspend fun updateCallHistoryOnLeave(historyId: UUID)
 }

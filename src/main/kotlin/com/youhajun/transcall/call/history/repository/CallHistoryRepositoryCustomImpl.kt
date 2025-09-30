@@ -6,15 +6,21 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.data.domain.Sort
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.data.r2dbc.core.select
+import org.springframework.data.r2dbc.core.update
 import org.springframework.data.relational.core.query.Criteria
 import org.springframework.data.relational.core.query.Query
+import org.springframework.data.relational.core.query.Update
+import org.springframework.stereotype.Repository
+import java.time.Instant
 import java.util.*
 
+@Repository
 class CallHistoryRepositoryCustomImpl(
     template: R2dbcEntityTemplate
 ) : CallHistoryRepositoryCustom {
 
     private val select = template.select<CallHistory>()
+    private val update = template.update<CallHistory>()
 
     override suspend fun findPageByUserIdAndCursor(
         userId: UUID,
@@ -35,5 +41,13 @@ class CallHistoryRepositoryCustomImpl(
             .all()
             .collectList()
             .awaitSingleOrNull() ?: emptyList()
+    }
+
+    override suspend fun updateCallHistoryOnLeave(historyId: UUID) {
+        val criteria = Criteria.where("id").`is`(historyId)
+        update
+            .matching(Query.query(criteria))
+            .apply(Update.update("left_at", Instant.now()))
+            .awaitSingleOrNull()
     }
 }

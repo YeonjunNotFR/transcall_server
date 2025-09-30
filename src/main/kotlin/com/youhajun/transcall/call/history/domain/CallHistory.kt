@@ -2,10 +2,12 @@ package com.youhajun.transcall.call.history.domain
 
 import org.springframework.data.relational.core.mapping.Table
 import com.fasterxml.uuid.Generators
+import com.youhajun.transcall.call.history.dto.CallHistoryResponse
+import com.youhajun.transcall.call.participant.domain.CallParticipant
 import com.youhajun.transcall.common.domain.BaseUUIDEntity
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.*
 
 @Table("call_history")
@@ -20,17 +22,26 @@ data class CallHistory(
     @Column("title")
     val title: String,
     @Column("summary")
-    val summary: String?,
+    val summary: String? = null,
     @Column("memo")
-    val memo: String?,
+    val memo: String? = null,
     @Column("liked")
     val liked: Boolean = false,
     @Column("deleted")
     val deleted: Boolean = false,
-    @Column("joined_at")
-    val joinedAt: LocalDateTime,
     @Column("left_at")
-    val leftAt: LocalDateTime?,
-    @Column("left_reason")
-    val leftReason: String?,
-) : BaseUUIDEntity()
+    val leftAt: Instant? = null,
+) : BaseUUIDEntity() {
+    fun toHistoryResponse(participants: List<CallParticipant>): CallHistoryResponse =
+        CallHistoryResponse(
+            historyId = id.toString(),
+            roomId = roomId.toString(),
+            joinedAtToEpochTime = createdAt.epochSecond,
+            leftAtToEpochTime = leftAt?.epochSecond,
+            participants = participants.map { it.toDto() },
+            title = title,
+            summary = summary ?: "",
+            memo = memo ?: "",
+            isLiked = liked
+        )
+}

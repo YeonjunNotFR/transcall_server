@@ -4,6 +4,7 @@ import com.youhajun.transcall.call.participant.dto.CallParticipantResponse
 
 data class CallHistoryResponse(
     val historyId: String,
+    val roomId: String,
     val title: String,
     val summary: String,
     val memo: String,
@@ -12,8 +13,9 @@ data class CallHistoryResponse(
     val leftAtToEpochTime: Long?,
     val participants: List<CallParticipantResponse>,
 ) {
+    @Suppress("unused")
     val durationSeconds: Long? = if (leftAtToEpochTime != null) {
-        (leftAtToEpochTime - joinedAtToEpochTime) / 1000
+        (leftAtToEpochTime - joinedAtToEpochTime)
     } else {
         null
     }

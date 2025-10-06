@@ -7,7 +7,9 @@ import org.springframework.data.r2dbc.core.awaitOneOrNull
 import org.springframework.data.r2dbc.core.select
 import org.springframework.data.relational.core.query.Criteria
 import org.springframework.data.relational.core.query.Query
+import org.springframework.stereotype.Repository
 
+@Repository
 class UserRepositoryCustomImpl(
     template: R2dbcEntityTemplate
 ) : UserRepositoryCustom {

@@ -22,6 +22,8 @@ data class User(
     val nickname: String,
     @Column("language")
     val language: LanguageType = LanguageType.ENGLISH,
+    @Column("country")
+    val country: CountryType = CountryType.UNITED_STATES,
     @Column("membership_plan")
     val membershipPlan: MembershipPlan = MembershipPlan.Free,
     @Column("profile_image_url")
@@ -31,9 +33,10 @@ data class User(
 ) : BaseUUIDEntity() {
     fun toMyInfoResponse(remainTime: RemainTimeResponse): MyInfoResponse {
         return MyInfoResponse(
-            userId = id,
+            userId = id.toString(),
             displayName = nickname,
-            language = language.code,
+            languageCode = language,
+            countryCode = country,
             membershipPlan = membershipPlan.string,
             imageUrl = profileImageUrl ?: "",
             remainTime = remainTime

@@ -5,11 +5,9 @@ import com.youhajun.transcall.common.domain.BaseEntity
 import com.youhajun.transcall.common.domain.BaseUUIDEntity
 import com.youhajun.transcall.user.dto.RemainTimeResponse
 import org.springframework.data.annotation.Id
-import org.springframework.data.domain.Persistable
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
-import java.time.LocalDateTime
-import java.time.ZoneOffset
+import java.time.Instant
 import java.util.*
 
 @Table("user_quotas")
@@ -18,14 +16,14 @@ data class UserQuota(
     @Column("id")
     override val uuid: UUID = Generators.timeBasedEpochRandomGenerator().generate(),
     @Column("user_id")
-    val userId: UUID,
+    val userId: UUID?,
     @Column("remaining_seconds")
     val remainingSeconds: Long,
     @Column("reset_at")
-    val resetAt: LocalDateTime
+    val resetAt: Instant
 ): BaseUUIDEntity() {
     fun toRemainTimeResponse() = RemainTimeResponse(
         remainingSeconds = remainingSeconds,
-        resetAtEpochSeconds = resetAt.toEpochSecond(ZoneOffset.UTC)
+        resetAtEpochSeconds = resetAt.epochSecond
     )
 }

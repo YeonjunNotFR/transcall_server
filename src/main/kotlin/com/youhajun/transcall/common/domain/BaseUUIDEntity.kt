@@ -14,8 +14,4 @@ abstract class BaseUUIDEntity : Persistable<UUID>, BaseEntity() {
     override fun getId(): UUID = uuid
 
     override fun isNew(): Boolean = isNewEntity
-
-    fun markAsNotNew() {
-        isNewEntity = false
-    }
 }

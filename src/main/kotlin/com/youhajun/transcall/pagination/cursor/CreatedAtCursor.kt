@@ -1,11 +1,11 @@
 package com.youhajun.transcall.pagination.cursor
 
 import java.nio.charset.StandardCharsets
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.*
 
 data class CreatedAtCursor(
-    val createdAt: LocalDateTime,
+    val createdAt: Instant,
     val id: Long
 ) : Cursor
 
@@ -22,7 +22,7 @@ object CreatedAtCursorCodec : CursorCodec<CreatedAtCursor> {
         val decoded = String(decoder.decode(raw), StandardCharsets.UTF_8)
         val (createdAtStr, idStr) = decoded.split("|")
         return CreatedAtCursor(
-            createdAt = LocalDateTime.parse(createdAtStr),
+            createdAt = Instant.parse(createdAtStr),
             id = idStr.toLong()
         )
     }

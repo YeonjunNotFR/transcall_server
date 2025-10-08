@@ -5,17 +5,20 @@ import com.youhajun.transcall.pagination.cursor.CursorCodec
 import com.youhajun.transcall.pagination.dto.CursorPage
 import com.youhajun.transcall.pagination.dto.Node
 import com.youhajun.transcall.pagination.dto.PageInfo
+import com.youhajun.transcall.pagination.vo.CursorPagination
 
 object CursorPaginationHelper {
 
     suspend fun <T, C: Cursor> paginate(
-        first: Int,
-        after: String?,
+        cursorPagination: CursorPagination,
         codec: CursorCodec<C>,
         fetchFunc: suspend (cursor: C?, limit: Int) -> List<T>,
         convertItemToCursorFunc: (T) -> C,
         totalCountFunc: (suspend () -> Long)? = null
     ): CursorPage<T> {
+        val after = cursorPagination.after
+        val first = cursorPagination.first
+
         val decodedCursor = after?.takeIf { it.isNotBlank() }?.let(codec::decode)
 
         val items = fetchFunc(decodedCursor, first + 1)

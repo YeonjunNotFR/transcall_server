@@ -1,6 +1,5 @@
 package com.youhajun.transcall.pagination.cursor
 
-import org.springframework.data.relational.core.query.Criteria
 import java.nio.charset.StandardCharsets
 import java.util.*
 

@@ -10,8 +10,8 @@ import com.youhajun.transcall.user.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
-import java.time.LocalDate
-import java.time.LocalDateTime
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 @Service
@@ -52,7 +52,7 @@ class UserServiceImpl(
     }
 
     private suspend fun createQuota(userId: UUID) {
-        val resetAt: LocalDateTime = LocalDate.now().plusDays(1).atStartOfDay()
+        val resetAt: Instant = Instant.now().plus(1, ChronoUnit.DAYS)
         val quota = UserQuota(userId = userId, remainingSeconds = INITIAL_QUOTA_SECONDS, resetAt = resetAt)
         userQuotaRepository.save(quota)
     }

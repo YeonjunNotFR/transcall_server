@@ -1,8 +1,8 @@
-package com.youhajun.transcall.janus.dto.auth
+package com.youhajun.transcall.client.janus.dto.auth
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.youhajun.transcall.janus.dto.BaseJanusRequest
-import com.youhajun.transcall.janus.dto.JanusCommand
+import com.youhajun.transcall.client.janus.dto.BaseJanusRequest
+import com.youhajun.transcall.client.janus.dto.JanusCommand
 
 data class DestroySessionRequest(
     @JsonProperty("session_id")

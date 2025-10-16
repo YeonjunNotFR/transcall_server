@@ -1,8 +1,8 @@
-package com.youhajun.transcall.janus.dto.auth
+package com.youhajun.transcall.client.janus.dto.auth
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.youhajun.transcall.janus.dto.BaseJanusResponse
-import com.youhajun.transcall.janus.dto.JanusResponseType
+import com.youhajun.transcall.client.janus.dto.BaseJanusResponse
+import com.youhajun.transcall.client.janus.dto.JanusResponseType
 
 data class CreateSessionResponse(
     val transaction: String,

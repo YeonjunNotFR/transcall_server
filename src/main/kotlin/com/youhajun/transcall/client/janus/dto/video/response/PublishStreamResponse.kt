@@ -1,4 +1,4 @@
-package com.youhajun.transcall.janus.dto.video.response
+package com.youhajun.transcall.client.janus.dto.video.response
 
 data class PublishStreamResponse(
     val type: String? = null,

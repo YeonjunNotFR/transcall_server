@@ -1,8 +1,8 @@
-package com.youhajun.transcall.janus.dto.plugin
+package com.youhajun.transcall.client.janus.dto.plugin
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.youhajun.transcall.janus.dto.BaseJanusRequest
-import com.youhajun.transcall.janus.dto.JanusCommand
+import com.youhajun.transcall.client.janus.dto.BaseJanusRequest
+import com.youhajun.transcall.client.janus.dto.JanusCommand
 
 data class TrickleCandidateRequest<T : TrickleBody>(
     @JsonProperty("session_id")

@@ -1,4 +1,4 @@
-package com.youhajun.transcall.janus.dto.plugin
+package com.youhajun.transcall.client.janus.dto.plugin
 
 data class JanusPluginData<T : Any>(
     val plugin: String,

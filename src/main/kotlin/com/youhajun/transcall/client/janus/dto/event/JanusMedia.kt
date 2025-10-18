@@ -1,8 +1,8 @@
-package com.youhajun.transcall.janus.dto.event
+package com.youhajun.transcall.client.janus.dto.event
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.youhajun.transcall.janus.dto.BaseJanusResponse
-import com.youhajun.transcall.janus.dto.JanusResponseType
+import com.youhajun.transcall.client.janus.dto.BaseJanusResponse
+import com.youhajun.transcall.client.janus.dto.JanusResponseType
 
 data class JanusMedia(
     @JsonProperty("session_id")

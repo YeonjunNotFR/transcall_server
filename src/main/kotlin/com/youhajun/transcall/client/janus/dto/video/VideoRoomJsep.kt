@@ -1,4 +1,4 @@
-package com.youhajun.transcall.janus.dto.video
+package com.youhajun.transcall.client.janus.dto.video
 
 data class VideoRoomJsep(
     val type: JSEPType,

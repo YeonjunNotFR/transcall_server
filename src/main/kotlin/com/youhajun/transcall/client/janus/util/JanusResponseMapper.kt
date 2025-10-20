@@ -1,11 +1,11 @@
-package com.youhajun.transcall.janus.util
+package com.youhajun.transcall.client.janus.util
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.youhajun.transcall.janus.dto.JanusResponseType
-import com.youhajun.transcall.janus.dto.error.JanusErrorResponse
-import com.youhajun.transcall.janus.exception.JanusException
+import com.youhajun.transcall.client.janus.dto.JanusResponseType
+import com.youhajun.transcall.client.janus.dto.error.JanusErrorResponse
+import com.youhajun.transcall.client.janus.exception.JanusException
 
 inline fun <reified T>JsonNode.janusResponseMapper(objectMapper: ObjectMapper): T {
     val janusType = this["janus"]?.asText()

@@ -1,8 +1,8 @@
-package com.youhajun.transcall.janus.util
+package com.youhajun.transcall.client.janus.util
 
-import com.youhajun.transcall.janus.dto.plugin.JanusPlugin
-import com.youhajun.transcall.janus.service.JanusPluginService
-import com.youhajun.transcall.janus.service.JanusSessionService
+import com.youhajun.transcall.client.janus.dto.plugin.JanusPlugin
+import com.youhajun.transcall.client.janus.service.JanusPluginService
+import com.youhajun.transcall.client.janus.service.JanusSessionService
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference

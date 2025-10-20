@@ -1,8 +1,8 @@
-package com.youhajun.transcall.janus.service
+package com.youhajun.transcall.client.janus.service
 
-import com.youhajun.transcall.janus.dto.plugin.JanusPluginResponse
-import com.youhajun.transcall.janus.dto.video.request.*
-import com.youhajun.transcall.janus.dto.video.response.*
+import com.youhajun.transcall.client.janus.dto.plugin.JanusPluginResponse
+import com.youhajun.transcall.client.janus.dto.video.request.*
+import com.youhajun.transcall.client.janus.dto.video.response.*
 import org.springframework.web.reactive.socket.WebSocketSession
 
 interface JanusVideoRoomService {

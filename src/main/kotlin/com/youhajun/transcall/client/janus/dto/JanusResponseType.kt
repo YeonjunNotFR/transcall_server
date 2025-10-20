@@ -1,4 +1,4 @@
-package com.youhajun.transcall.janus.dto;
+package com.youhajun.transcall.client.janus.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator
 

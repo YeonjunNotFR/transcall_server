@@ -1,6 +1,6 @@
-package com.youhajun.transcall.janus.exception
+package com.youhajun.transcall.client.janus.exception
 
-import com.youhajun.transcall.janus.dto.error.JanusErrorResponse
+import com.youhajun.transcall.client.janus.dto.error.JanusErrorResponse
 import org.springframework.web.reactive.socket.CloseStatus
 
 sealed class JanusException(val closeStatus: CloseStatus) : RuntimeException() {

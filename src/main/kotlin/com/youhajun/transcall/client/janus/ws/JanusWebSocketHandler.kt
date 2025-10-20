@@ -1,13 +1,13 @@
-package com.youhajun.transcall.janus.ws
+package com.youhajun.transcall.client.janus.ws
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.youhajun.transcall.janus.dto.JanusResponseType
-import com.youhajun.transcall.janus.dto.event.*
-import com.youhajun.transcall.janus.dto.plugin.*
-import com.youhajun.transcall.janus.dto.video.response.VideoRoomResponseType
-import com.youhajun.transcall.janus.util.JanusTransactionHelper
+import com.youhajun.transcall.client.janus.dto.JanusResponseType
+import com.youhajun.transcall.client.janus.dto.event.*
+import com.youhajun.transcall.client.janus.dto.plugin.*
+import com.youhajun.transcall.client.janus.dto.video.response.VideoRoomResponseType
+import com.youhajun.transcall.client.janus.util.JanusTransactionHelper
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -39,6 +39,7 @@ class JanusWebSocketHandler(
         connectionReady.complete(connection)
 
         session.receive()
+            .doOnError { logger.error("Connection Error ${it.message}") }
             .map { it.payloadAsText }
             .asFlow()
             .collect(::handleJanusMessage)

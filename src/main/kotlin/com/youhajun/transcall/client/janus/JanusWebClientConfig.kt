@@ -1,4 +1,4 @@
-package com.youhajun.transcall.janus
+package com.youhajun.transcall.client.janus
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

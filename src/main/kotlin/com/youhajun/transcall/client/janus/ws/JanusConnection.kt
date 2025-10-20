@@ -1,6 +1,6 @@
-package com.youhajun.transcall.janus.ws
+package com.youhajun.transcall.client.janus.ws
 
-import com.youhajun.transcall.janus.dto.event.JanusEvent
+import com.youhajun.transcall.client.janus.dto.event.JanusEvent
 import kotlinx.coroutines.flow.SharedFlow
 import org.springframework.web.reactive.socket.WebSocketSession
 

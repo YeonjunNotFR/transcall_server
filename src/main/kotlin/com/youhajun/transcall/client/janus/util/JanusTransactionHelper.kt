@@ -1,9 +1,9 @@
-package com.youhajun.transcall.janus.util
+package com.youhajun.transcall.client.janus.util
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.youhajun.transcall.janus.dto.BaseJanusRequest
-import com.youhajun.transcall.janus.dto.JanusResponseType
+import com.youhajun.transcall.client.janus.dto.BaseJanusRequest
+import com.youhajun.transcall.client.janus.dto.JanusResponseType
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.withTimeout

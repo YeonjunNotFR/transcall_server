@@ -1,7 +1,7 @@
-package com.youhajun.transcall.janus.dto.error
+package com.youhajun.transcall.client.janus.dto.error
 
-import com.youhajun.transcall.janus.dto.BaseJanusResponse
-import com.youhajun.transcall.janus.dto.JanusResponseType
+import com.youhajun.transcall.client.janus.dto.BaseJanusResponse
+import com.youhajun.transcall.client.janus.dto.JanusResponseType
 
 data class JanusErrorResponse(
     val transaction: String?,

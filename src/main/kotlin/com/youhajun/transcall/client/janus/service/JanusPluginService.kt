@@ -1,6 +1,6 @@
-package com.youhajun.transcall.janus.service
+package com.youhajun.transcall.client.janus.service
 
-import com.youhajun.transcall.janus.dto.plugin.*
+import com.youhajun.transcall.client.janus.dto.plugin.*
 import org.springframework.web.reactive.socket.WebSocketSession
 
 interface JanusPluginService {

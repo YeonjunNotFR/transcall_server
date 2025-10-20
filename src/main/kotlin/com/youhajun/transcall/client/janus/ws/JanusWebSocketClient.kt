@@ -1,7 +1,7 @@
-package com.youhajun.transcall.janus.ws;
+package com.youhajun.transcall.client.janus.ws;
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.youhajun.transcall.janus.util.JanusTransactionHelper
+import com.youhajun.transcall.client.janus.util.JanusTransactionHelper
 import kotlinx.coroutines.CompletableDeferred
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Component

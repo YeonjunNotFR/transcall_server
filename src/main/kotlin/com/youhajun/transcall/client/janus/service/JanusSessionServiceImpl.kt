@@ -1,14 +1,11 @@
-package com.youhajun.transcall.janus.service
+package com.youhajun.transcall.client.janus.service
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.youhajun.transcall.janus.dto.auth.CreateSessionData
-import com.youhajun.transcall.janus.dto.auth.CreateSessionRequest
-import com.youhajun.transcall.janus.dto.auth.CreateSessionResponse
-import com.youhajun.transcall.janus.dto.auth.DestroySessionRequest
-import com.youhajun.transcall.janus.exception.JanusException
-import com.youhajun.transcall.janus.util.JanusTransactionHelper
-import com.youhajun.transcall.janus.util.janusResponseMapper
+import com.youhajun.transcall.client.janus.dto.auth.*
+import com.youhajun.transcall.client.janus.exception.JanusException
+import com.youhajun.transcall.client.janus.util.JanusTransactionHelper
+import com.youhajun.transcall.client.janus.util.janusResponseMapper
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -35,7 +32,7 @@ class JanusSessionServiceImpl(
 
     override suspend fun destroySession(session: WebSocketSession, sessionId: Long) {
         val request = DestroySessionRequest(sessionId = sessionId)
-        transactionHelper.requestJanusResponse<Unit>(session, request)
+        transactionHelper.sendJanusMessage(session, request)
     }
 
     override suspend fun createManagerSession(): Result<CreateSessionData> = runCatching {
@@ -64,5 +61,10 @@ class JanusSessionServiceImpl(
             .bodyToMono(JsonNode::class.java)
             .map { it.janusResponseMapper<Unit>(objectMapper) }
             .awaitSingleOrNull() ?: throw JanusException.JanusResponseMappingException()
+    }
+
+    override suspend fun keepAlive(session: WebSocketSession, sessionId: Long) {
+        val request = KeepAliveRequest(sessionId = sessionId)
+        transactionHelper.sendJanusMessage(session, request)
     }
 }

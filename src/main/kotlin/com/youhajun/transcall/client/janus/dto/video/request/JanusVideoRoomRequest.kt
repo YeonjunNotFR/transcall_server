@@ -1,10 +1,10 @@
-package com.youhajun.transcall.janus.dto.video.request
+package com.youhajun.transcall.client.janus.dto.video.request
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.youhajun.transcall.janus.dto.BaseJanusRequest
-import com.youhajun.transcall.janus.dto.JanusCommand
-import com.youhajun.transcall.janus.dto.video.VideoRoomJsep
+import com.youhajun.transcall.client.janus.dto.BaseJanusRequest
+import com.youhajun.transcall.client.janus.dto.JanusCommand
+import com.youhajun.transcall.client.janus.dto.video.VideoRoomJsep
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class JanusVideoRoomRequest<T : Any>(

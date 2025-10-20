@@ -1,7 +1,7 @@
-package com.youhajun.transcall.janus.dto.video.request
+package com.youhajun.transcall.client.janus.dto.video.request
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.youhajun.transcall.janus.dto.video.PeerType
+import com.youhajun.transcall.client.janus.dto.video.PeerType
 
 data class JoinPublisherRequestBody(
     val ptype: PeerType = PeerType.PUBLISHER,

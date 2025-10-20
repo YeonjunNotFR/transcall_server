@@ -1,4 +1,4 @@
-package com.youhajun.transcall.janus.dto.video.request
+package com.youhajun.transcall.client.janus.dto.video.request
 
 import com.fasterxml.jackson.annotation.JsonValue
 

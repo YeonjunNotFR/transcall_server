@@ -1,4 +1,4 @@
-package com.youhajun.transcall.janus.dto.video.request
+package com.youhajun.transcall.client.janus.dto.video.request
 
 data class VideoRoomSubscriberUpdateRequestBody(
     val subscribe: List<SubscribeStreamRequest>,

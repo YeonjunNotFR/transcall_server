@@ -1,8 +1,8 @@
-package com.youhajun.transcall.client.whisper.ws
+package com.youhajun.transcall.whisper.ws
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.youhajun.transcall.client.whisper.dto.SttMessage
-import com.youhajun.transcall.client.whisper.dto.WhisperEvent
+import com.youhajun.transcall.whisper.dto.TranscriptUpdate
+import com.youhajun.transcall.whisper.dto.WhisperEvent
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -38,7 +38,7 @@ class WhisperWebSocketHandler(
 
     private suspend fun handleWhisperMessage(payloadText: String) {
         try {
-            val event = objectMapper.readValue(payloadText, SttMessage::class.java)
+            val event = objectMapper.readValue(payloadText, TranscriptUpdate::class.java)
             _eventMessage.emit(event)
         } catch (e: Exception) {
             logger.error("Failed to parse Whisper message: ${e.message}", e)

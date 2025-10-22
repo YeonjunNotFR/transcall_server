@@ -1,4 +1,4 @@
-package com.youhajun.transcall.client.whisper.ws
+package com.youhajun.transcall.whisper.ws
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.youhajun.transcall.user.domain.LanguageType

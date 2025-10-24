@@ -10,8 +10,8 @@ import com.youhajun.transcall.call.room.dto.RoomInfoResponse
 import com.youhajun.transcall.call.room.exception.RoomException
 import com.youhajun.transcall.call.room.repository.CallRoomRepository
 import com.youhajun.transcall.call.room.repository.JanusRoomIdCacheRepository
-import com.youhajun.transcall.client.janus.dto.video.request.CreateVideoRoomRequest
-import com.youhajun.transcall.client.janus.service.JanusVideoRoomService
+import com.youhajun.transcall.janus.dto.video.request.CreateVideoRoomRequest
+import com.youhajun.transcall.janus.service.JanusVideoRoomService
 import com.youhajun.transcall.common.vo.SortDirection
 import com.youhajun.transcall.pagination.CursorPaginationHelper
 import com.youhajun.transcall.pagination.cursor.UUIDCursor

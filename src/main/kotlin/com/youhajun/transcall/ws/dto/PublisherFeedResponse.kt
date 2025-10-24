@@ -1,6 +1,6 @@
 package com.youhajun.transcall.ws.dto
 
-import com.youhajun.transcall.client.janus.dto.video.response.JanusPublisherResponse
+import com.youhajun.transcall.janus.dto.video.response.JanusPublisherResponse
 
 data class PublisherFeedResponse(
     val feedId: Long,

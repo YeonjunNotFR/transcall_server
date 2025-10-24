@@ -1,6 +1,6 @@
 package com.youhajun.transcall.ws.dto
 
-import com.youhajun.transcall.client.janus.dto.video.response.SubscribeStreamResponse
+import com.youhajun.transcall.janus.dto.video.response.SubscribeStreamResponse
 
 data class SubscriberFeedResponse(
     val type: String,

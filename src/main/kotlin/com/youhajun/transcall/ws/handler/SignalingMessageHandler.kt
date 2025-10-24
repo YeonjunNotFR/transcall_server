@@ -2,14 +2,14 @@ package com.youhajun.transcall.ws.handler
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.youhajun.transcall.call.room.service.CallRoomService
-import com.youhajun.transcall.client.janus.dto.plugin.TrickleCandidateBody
-import com.youhajun.transcall.client.janus.dto.plugin.TrickleCandidateRequest
-import com.youhajun.transcall.client.janus.dto.plugin.TrickleCompletedBody
-import com.youhajun.transcall.client.janus.dto.video.JSEPType
-import com.youhajun.transcall.client.janus.dto.video.VideoRoomJsep
-import com.youhajun.transcall.client.janus.dto.video.request.*
-import com.youhajun.transcall.client.janus.service.JanusPluginService
-import com.youhajun.transcall.client.janus.service.JanusVideoRoomService
+import com.youhajun.transcall.janus.dto.plugin.TrickleCandidateBody
+import com.youhajun.transcall.janus.dto.plugin.TrickleCandidateRequest
+import com.youhajun.transcall.janus.dto.plugin.TrickleCompletedBody
+import com.youhajun.transcall.janus.dto.video.JSEPType
+import com.youhajun.transcall.janus.dto.video.VideoRoomJsep
+import com.youhajun.transcall.janus.dto.video.request.*
+import com.youhajun.transcall.janus.service.JanusPluginService
+import com.youhajun.transcall.janus.service.JanusVideoRoomService
 import com.youhajun.transcall.ws.dto.*
 import com.youhajun.transcall.ws.dto.payload.*
 import com.youhajun.transcall.ws.exception.WebSocketException

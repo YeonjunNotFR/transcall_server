@@ -5,7 +5,7 @@ import com.youhajun.transcall.auth.jwt.JwtProvider
 import com.youhajun.transcall.call.history.service.CallHistoryService
 import com.youhajun.transcall.call.participant.service.CallParticipantService
 import com.youhajun.transcall.call.room.service.CallRoomService
-import com.youhajun.transcall.client.janus.exception.JanusException
+import com.youhajun.transcall.janus.exception.JanusException
 import com.youhajun.transcall.ws.dto.ClientMessage
 import com.youhajun.transcall.ws.dto.ServerMessage
 import com.youhajun.transcall.ws.dto.payload.*

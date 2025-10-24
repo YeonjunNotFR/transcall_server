@@ -1,6 +1,6 @@
 package com.youhajun.transcall.ws.dto
 
-import com.youhajun.transcall.client.janus.dto.video.request.SubscribeStreamRequest
+import com.youhajun.transcall.janus.dto.video.request.SubscribeStreamRequest
 
 data class SubscriberFeedRequest(
     val feedId: Long,

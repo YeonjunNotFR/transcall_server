@@ -1,6 +1,8 @@
 package com.youhajun.transcall.janus.dto.plugin
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.youhajun.transcall.janus.dto.BaseJanusRequest
 import com.youhajun.transcall.janus.dto.JanusCommand
 
@@ -14,6 +16,11 @@ data class TrickleCandidateRequest<T : TrickleBody>(
     override val janus: JanusCommand = JanusCommand.TRICKLE
 }
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
+@JsonSubTypes(
+    JsonSubTypes.Type(TrickleCandidateBody::class),
+    JsonSubTypes.Type(TrickleCompletedBody::class)
+)
 sealed interface TrickleBody
 
 data class TrickleCandidateBody(

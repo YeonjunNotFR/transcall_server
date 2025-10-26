@@ -6,6 +6,8 @@ enum class VideoRoomRequestType(val value: String) {
     CREATE("create"),
     JOIN("join"),
     PUBLISH("publish"),
+    UNPUBLISH("unpublish"),
+    LEAVE("leave"),
     UPDATE("update"),
     SUBSCRIBE("subscribe"),
     UNSUBSCRIBE("unsubscribe"),

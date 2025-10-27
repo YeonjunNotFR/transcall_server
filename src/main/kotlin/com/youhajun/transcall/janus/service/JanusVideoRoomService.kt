@@ -8,31 +8,60 @@ import org.springframework.web.reactive.socket.WebSocketSession
 interface JanusVideoRoomService {
 
     suspend fun createRoom(
-        request: CreateVideoRoomRequest
+        janusRoomId: Long
     ): Result<CreateVideoRoomResponse>
 
     suspend fun joinPublish(
         session: WebSocketSession,
-        request: JanusVideoRoomRequest<JoinPublisherRequestBody>,
+        sessionId: Long,
+        handleId: Long,
+        janusRoomId: Long,
+        display: String,
     ): Result<JoinPublisherResponse>
+
+    suspend fun unpublish(
+        session: WebSocketSession,
+        sessionId: Long,
+        handleId: Long,
+    )
+
+    suspend fun leave(
+        session: WebSocketSession,
+        sessionId: Long,
+        handleId: Long,
+    )
 
     suspend fun joinSubscribe(
         session: WebSocketSession,
-        request: JanusVideoRoomRequest<JoinSubscriberRequestBody>,
+        sessionId: Long,
+        handleId: Long,
+        janusRoomId: Long,
+        privateId: Long?,
+        streams: List<SubscribeStreamBody>,
     ): Result<JanusPluginResponse<JoinSubscriberResponse>>
 
     suspend fun publish(
         session: WebSocketSession,
-        request: JanusVideoRoomRequest<VideoRoomPublishRequestBody>,
+        sessionId: Long,
+        handleId: Long,
+        offerSdp: String,
+        audioCodec: String?,
+        videoCodec: String?,
+        descriptions: List<StreamDescription>,
     ): Result<JanusPluginResponse<VideoRoomPublishResponse>>
 
     suspend fun subscriberUpdate(
         session: WebSocketSession,
-        request: JanusVideoRoomRequest<VideoRoomSubscriberUpdateRequestBody>,
-    ): Result<VideoRoomSubscribeResponse>
+        sessionId: Long,
+        handleId: Long,
+        subscribe: List<SubscribeStreamBody>?,
+        unsubscribe: List<SubscribeStreamBody>?,
+    ): Result<JanusPluginResponse<VideoRoomSubscribeResponse>>
 
     suspend fun start(
         session: WebSocketSession,
-        request: JanusVideoRoomRequest<VideoRoomStartRequestBody>,
+        sessionId: Long,
+        handleId: Long,
+        answerSdp: String,
     ): Result<VideoRoomStartResponse>
 }

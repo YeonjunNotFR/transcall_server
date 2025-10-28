@@ -17,3 +17,8 @@ data class JanusPluginResponse<T : Any>(
 ) : BaseJanusResponse {
     override val janus: JanusResponseType = JanusResponseType.EVENT
 }
+
+data class JanusPluginData<T : Any>(
+    val plugin: String,
+    val data: T
+)

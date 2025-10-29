@@ -11,11 +11,11 @@ import com.youhajun.transcall.janus.dto.video.response.*
 import com.youhajun.transcall.janus.exception.JanusException
 import com.youhajun.transcall.janus.util.JanusControlManager
 import com.youhajun.transcall.janus.util.JanusTransactionHelper
-import com.youhajun.transcall.janus.util.janusResponseMapper
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
@@ -24,14 +24,13 @@ import org.springframework.web.reactive.socket.WebSocketSession
 @Service
 class JanusVideoRoomServiceImpl(
     @Qualifier("janusWebClient") private val client: WebClient,
-    private val objectMapper: ObjectMapper,
     private val transactionHelper: JanusTransactionHelper,
     private val janusControlManager: JanusControlManager
 ) : JanusVideoRoomService {
 
     private val logger: Logger = LogManager.getLogger(JanusVideoRoomServiceImpl::class.java)
 
-    override suspend fun createRoom(janusRoomId: Long): Result<CreateVideoRoomResponse> = runCatching {
+    override suspend fun createRoom(janusRoomId: Long): Result<CreateRoomResponse> = runCatching {
         val sessionId = janusControlManager.getSessionId()
         val handleId = janusControlManager.getHandleId(JanusPlugin.VIDEO_ROOM)
         val request = CreateRoomBody(janusRoomId = janusRoomId)
@@ -42,8 +41,7 @@ class JanusVideoRoomServiceImpl(
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(janusRequest)
             .retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .map { it.janusResponseMapper<CreateVideoRoomResponse>(objectMapper) }
+            .bodyToMono(object : ParameterizedTypeReference<CreateRoomResponse>() {})
             .awaitSingleOrNull() ?: throw JanusException.JanusResponseMappingException()
     }.onFailure {
         logger.error(it)
@@ -83,7 +81,7 @@ class JanusVideoRoomServiceImpl(
         janusRoomId: Long,
         privateId: Long?,
         streams: List<SubscribeStreamBody>,
-    ): Result<JanusPluginResponse<JoinSubscriberResponse>> {
+    ): Result<JanusPluginResponse<VideoRoomSubscribeResponse>> {
         val body = JoinSubscriberBody(janusRoomId = janusRoomId, privateId = privateId, streams = streams)
         val req = JanusVideoRoomRequest(sessionId = sessionId, handleId = handleId, body = body)
         return transactionHelper.requestJanusResponse(session, req)
@@ -97,7 +95,7 @@ class JanusVideoRoomServiceImpl(
         audioCodec: String?,
         videoCodec: String?,
         descriptions: List<StreamDescription>,
-    ): Result<JanusPluginResponse<VideoRoomPublishResponse>> {
+    ): Result<JanusPluginResponse<VideoRoomEventResponse>> {
         val jsep = VideoRoomJsep(type = JSEPType.OFFER, sdp = offerSdp)
         val body = PublishBody(
             audioCodec = audioCodec,
@@ -128,11 +126,11 @@ class JanusVideoRoomServiceImpl(
         sessionId: Long,
         handleId: Long,
         answerSdp: String,
-    ): Result<VideoRoomStartResponse> {
+    ): Result<VideoRoomEventResponse> {
         val jsep = VideoRoomJsep(type = JSEPType.ANSWER, sdp = answerSdp)
         val req = JanusVideoRoomRequest(sessionId = sessionId, handleId = handleId, body = StartBody, jsep = jsep)
         return transactionHelper
-            .requestJanusResponse<JanusPluginResponse<VideoRoomStartResponse>>(session, req)
+            .requestJanusResponse<JanusPluginResponse<VideoRoomEventResponse>>(session, req)
             .map { it.pluginData.data }
     }
 }

@@ -9,7 +9,7 @@ interface JanusVideoRoomService {
 
     suspend fun createRoom(
         janusRoomId: Long
-    ): Result<CreateVideoRoomResponse>
+    ): Result<CreateRoomResponse>
 
     suspend fun joinPublish(
         session: WebSocketSession,
@@ -38,7 +38,7 @@ interface JanusVideoRoomService {
         janusRoomId: Long,
         privateId: Long?,
         streams: List<SubscribeStreamBody>,
-    ): Result<JanusPluginResponse<JoinSubscriberResponse>>
+    ): Result<JanusPluginResponse<VideoRoomSubscribeResponse>>
 
     suspend fun publish(
         session: WebSocketSession,
@@ -48,7 +48,7 @@ interface JanusVideoRoomService {
         audioCodec: String?,
         videoCodec: String?,
         descriptions: List<StreamDescription>,
-    ): Result<JanusPluginResponse<VideoRoomPublishResponse>>
+    ): Result<JanusPluginResponse<VideoRoomEventResponse>>
 
     suspend fun subscriberUpdate(
         session: WebSocketSession,
@@ -63,5 +63,5 @@ interface JanusVideoRoomService {
         sessionId: Long,
         handleId: Long,
         answerSdp: String,
-    ): Result<VideoRoomStartResponse>
+    ): Result<VideoRoomEventResponse>
 }

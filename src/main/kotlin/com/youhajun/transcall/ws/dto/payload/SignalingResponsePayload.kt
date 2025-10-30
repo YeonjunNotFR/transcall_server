@@ -25,6 +25,14 @@ data class NewPublishers(
     }
 }
 
+data class Unpublished(
+    val feedId: Long,
+) : SignalingResponse {
+    companion object {
+        const val ACTION = "unpublished"
+    }
+}
+
 data class PublisherAnswer(
     val publisherHandleId: Long,
     val answerSdp: String

@@ -1,8 +1,6 @@
 package com.youhajun.transcall.ws.dto.payload
 
-import com.youhajun.transcall.user.domain.LanguageType
-
-sealed interface TranslationRequest : RequestPayload
+import com.youhajun.transcall.call.conversation.dto.ConversationResponse
 
 sealed interface TranslationResponse : ResponsePayload
 
@@ -11,14 +9,7 @@ data object SttStart : TranslationResponse {
 }
 
 data class TranslationMessage(
-    val conversationId: String,
-    val roomId: String,
-    val senderId: String?,
-    val originText: String,
-    val originLanguage: LanguageType,
-    val transText: String? = null,
-    val transLanguage: LanguageType? = null,
-    val createdAtToEpochTime: Long,
+    val message: ConversationResponse
 ) : TranslationResponse {
     companion object {
         const val ACTION = "transMessage"

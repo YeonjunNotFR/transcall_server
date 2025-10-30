@@ -30,6 +30,7 @@ sealed interface RequestPayload : MessagePayload
 )
 @JsonSubTypes(
     JsonSubTypes.Type(value = NewPublishers::class, name = NewPublishers.ACTION),
+    JsonSubTypes.Type(value = Unpublished::class, name = Unpublished.ACTION),
     JsonSubTypes.Type(value = JoinedRoomPublisher::class, name = JoinedRoomPublisher.ACTION),
     JsonSubTypes.Type(value = PublisherAnswer::class, name = PublisherAnswer.ACTION),
     JsonSubTypes.Type(value = SubscriberOffer::class, name = SubscriberOffer.ACTION),

@@ -9,6 +9,7 @@ data class RoomParticipantSession(
     val userId: UUID,
     val historyId: UUID,
     val participantId: UUID,
+    val language: LanguageType,
     val userSession: WebSocketSession,
     val mediaState: MediaStateInfo = MediaStateInfo(),
     val janusSessionInfo: JanusSessionInfo? = null,
@@ -23,7 +24,6 @@ data class MediaStateInfo(
 data class WhisperSessionInfo(
     val whisperSession: WebSocketSession,
     val runtimeJob: Job,
-    val language: LanguageType,
 )
 
 data class JanusSessionInfo(

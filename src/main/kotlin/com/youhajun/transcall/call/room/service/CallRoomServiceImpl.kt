@@ -10,7 +10,6 @@ import com.youhajun.transcall.call.room.dto.RoomInfoResponse
 import com.youhajun.transcall.call.room.exception.RoomException
 import com.youhajun.transcall.call.room.repository.CallRoomRepository
 import com.youhajun.transcall.call.room.repository.JanusRoomIdCacheRepository
-import com.youhajun.transcall.janus.dto.video.request.CreateVideoRoomRequest
 import com.youhajun.transcall.janus.service.JanusVideoRoomService
 import com.youhajun.transcall.common.vo.SortDirection
 import com.youhajun.transcall.pagination.CursorPaginationHelper
@@ -55,8 +54,7 @@ class CallRoomServiceImpl(
             val reloaded = callRoomRepository.findById(saved.id) ?: throw RoomException.RoomNotFound()
 
             val janusRoomId = reloaded.requireJanusRoomId()
-            val janusRequest = CreateVideoRoomRequest(janusRoomId)
-            janusVideoRoomService.createRoom(janusRequest).getOrThrow()
+            janusVideoRoomService.createRoom(janusRoomId).getOrThrow()
             janusRoomIdCacheRepository.saveJanusRoomId(reloaded.id, janusRoomId, JANUS_ROOM_ID_CACHE_TTL)
             reloaded.id
         }

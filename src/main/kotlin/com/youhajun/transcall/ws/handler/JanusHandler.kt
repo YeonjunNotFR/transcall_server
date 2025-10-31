@@ -7,6 +7,7 @@ import com.youhajun.transcall.janus.dto.plugin.TrickleCandidateBody
 import com.youhajun.transcall.janus.dto.video.VideoRoomJsep
 import com.youhajun.transcall.janus.service.JanusPluginService
 import com.youhajun.transcall.janus.service.JanusSessionService
+import com.youhajun.transcall.janus.service.JanusVideoRoomService
 import com.youhajun.transcall.janus.ws.JanusWebSocketClient
 import com.youhajun.transcall.ws.dto.ServerMessage
 import com.youhajun.transcall.ws.dto.payload.*
@@ -32,6 +33,7 @@ class JanusHandler(
     private val janusWebSocketClient: JanusWebSocketClient,
     private val janusSessionService: JanusSessionService,
     private val janusPluginService: JanusPluginService,
+    private val janusVideoRoomService: JanusVideoRoomService
 ) {
     companion object {
         private const val KEEP_ALIVE_INTERVAL_MS = 30000L
@@ -71,9 +73,11 @@ class JanusHandler(
 
     suspend fun disposeJanus(roomId: UUID, userId: UUID) {
         val janusSessionInfo = roomSessionManager.getUserSession(roomId, userId)?.janusSessionInfo ?: return
-        janusSessionInfo.runtimeJob.cancelAndJoin()
         val janusSession = janusSessionInfo.janusSession
-        janusSessionService.destroySession(janusSession, janusSessionInfo.janusSessionId)
+        val janusSessionId = janusSessionInfo.janusSessionId
+        janusVideoRoomService.leave(janusSession, janusSessionId, janusSessionInfo.videoRoomHandleInfo.defaultPublisherHandleId)
+        janusSessionInfo.runtimeJob.cancelAndJoin()
+        janusSessionService.destroySession(janusSession, janusSessionId)
         if (janusSession.isOpen) janusSession.close().awaitSingleOrNull()
     }
 
@@ -97,6 +101,8 @@ class JanusHandler(
                 is JanusPluginEvent<*> -> {
                     when (val eventData = it.pluginData.data) {
                         is OnNewPublisher -> eventData.newPublisherEventHandle(roomId, userId, it.jsep)
+                        is OnLeaving -> eventData.notifyLeaving(roomId, userId)
+                        is OnUnpublished -> eventData.notifyUnpublish(roomId, userId)
                     }
                 }
             }
@@ -129,6 +135,17 @@ class JanusHandler(
             sendSttStart(userSession)
             sendMediaStateInit(roomId, userId, userSession)
         }
+    }
+
+    private suspend fun OnLeaving.notifyLeaving(roomId: UUID, userId: UUID) {
+
+    }
+
+    private suspend fun OnUnpublished.notifyUnpublish(roomId: UUID, userId: UUID) {
+        val feedId = unpublished as? Long ?: return
+        val userSession = roomSessionManager.getUserSession(roomId, userId)?.userSession ?: throw WebSocketException.SessionNotFound()
+        val message = ServerMessage(type = MessageType.SIGNALING, payload = Unpublished(feedId))
+        userSession.sendServerMessage(message, objectMapper)
     }
 
     private suspend fun OnNewPublisher.newPublisherEventHandle(roomId: UUID, userId: UUID, jsep: VideoRoomJsep?) {

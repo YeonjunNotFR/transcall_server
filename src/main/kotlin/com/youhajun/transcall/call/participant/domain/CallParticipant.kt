@@ -38,5 +38,6 @@ data class CallParticipant(
         profileImageUrl = profileImageUrl ?: "",
         languageCode = language,
         countryCode = country,
+        leftAtToEpochTime = leftAt?.epochSecond
     )
 }

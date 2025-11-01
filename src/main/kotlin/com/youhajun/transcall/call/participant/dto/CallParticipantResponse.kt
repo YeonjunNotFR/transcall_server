@@ -9,5 +9,6 @@ data class CallParticipantResponse(
     val displayName: String,
     val profileImageUrl: String,
     val languageCode: LanguageType,
-    val countryCode: CountryType
+    val countryCode: CountryType,
+    val leftAtToEpochTime: Long?,
 )

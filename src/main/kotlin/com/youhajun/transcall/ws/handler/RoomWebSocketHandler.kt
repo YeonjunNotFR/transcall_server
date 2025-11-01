@@ -6,6 +6,7 @@ import com.youhajun.transcall.call.history.service.CallHistoryService
 import com.youhajun.transcall.call.participant.service.CallParticipantService
 import com.youhajun.transcall.call.room.service.CallRoomService
 import com.youhajun.transcall.janus.exception.JanusException
+import com.youhajun.transcall.user.service.UserService
 import com.youhajun.transcall.ws.dto.ClientMessage
 import com.youhajun.transcall.ws.dto.ServerMessage
 import com.youhajun.transcall.ws.dto.payload.*
@@ -38,6 +39,7 @@ class RoomWebSocketHandler(
     private val roomSessionManager: RoomSessionManager,
     private val jwtProvider: JwtProvider,
     private val janusHandler: JanusHandler,
+    private val userService: UserService,
     private val roomService: CallRoomService,
     private val participantService: CallParticipantService,
     private val historyService: CallHistoryService,
@@ -131,13 +133,15 @@ class RoomWebSocketHandler(
 
     private suspend fun initSession(roomId: UUID, userId: UUID, userSession: WebSocketSession) {
         logger.info("Initializing session for user $userId in room $roomId")
+        val user = userService.findUserById(userId)
         val historyId = historyService.saveCallHistory(userId, roomId)
         val participantId = participantService.saveParticipant(roomId, userId)
         val participantSession = RoomParticipantSession(
             userId = userId,
             userSession = userSession,
             historyId = historyId,
-            participantId = participantId
+            participantId = participantId,
+            language = user.language
         )
         roomSessionManager.addUserSession(roomId, participantSession)
     }

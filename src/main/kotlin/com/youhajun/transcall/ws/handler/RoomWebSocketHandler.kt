@@ -9,7 +9,8 @@ import com.youhajun.transcall.janus.exception.JanusException
 import com.youhajun.transcall.user.service.UserService
 import com.youhajun.transcall.ws.dto.ClientMessage
 import com.youhajun.transcall.ws.dto.ServerMessage
-import com.youhajun.transcall.ws.dto.payload.*
+import com.youhajun.transcall.ws.dto.payload.ChangedRoom
+import com.youhajun.transcall.ws.dto.payload.ConnectedRoom
 import com.youhajun.transcall.ws.exception.WebSocketException
 import com.youhajun.transcall.ws.sendBinaryMessage
 import com.youhajun.transcall.ws.sendServerMessage
@@ -70,8 +71,10 @@ class RoomWebSocketHandler(
             if (isFull) throw WebSocketException.RoomFull()
 
             initSession(roomId, userId, session)
-            janusSession = janusHandler.connectJanus(roomId, userId)
-            launch { whisperSession = whisperHandler.connectWhisper(roomId, userId) }
+            val janusJob = launch { janusSession = janusHandler.connectJanus(roomId, userId) }
+            val whisperJob = launch { whisperSession = whisperHandler.connectWhisper(roomId, userId) }
+            janusJob.join()
+            whisperJob.join()
             joinSession(roomId, userId, session)
 
             session.receive()
@@ -90,7 +93,6 @@ class RoomWebSocketHandler(
                     }
                 }
         } catch (e: Exception) {
-            logger.warn("Unable to connect to room $roomId", e)
             when (e) {
                 is WebSocketException -> session.close(e.closeStatus).awaitSingleOrNull()
                 is JanusException -> session.close(e.closeStatus).awaitSingleOrNull()
@@ -99,7 +101,7 @@ class RoomWebSocketHandler(
         } finally {
             removeSession(roomId, userId)
             if(session.isOpen) session.close().awaitSingleOrNull()
-            if(janusSession?.isOpen == true) janusSession.close().awaitSingleOrNull()
+            if(janusSession?.isOpen == true) janusSession?.close()?.awaitSingleOrNull()
             if(whisperSession?.isOpen == true) whisperSession?.close()?.awaitSingleOrNull()
             this.cancel()
         }
@@ -147,6 +149,7 @@ class RoomWebSocketHandler(
     }
 
     private suspend fun joinSession(roomId: UUID, userId: UUID, userSession: WebSocketSession) {
+        logger.info("Joining session for user $userId in room $roomId")
         roomService.updateRoomStatus(roomId)
         roomService.updateCurrentParticipantCount(roomId)
         sendConnected(userId, roomId, userSession)

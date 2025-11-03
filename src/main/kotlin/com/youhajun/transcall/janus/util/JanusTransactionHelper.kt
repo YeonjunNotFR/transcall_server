@@ -74,6 +74,6 @@ final class JanusTransactionHelper(
             val error = objectMapper.convertValue(json, JanusErrorResponse::class.java)
             throw JanusException.JanusResponseException(error)
         }
-        return objectMapper.treeToValue(json, T::class.java)
+        return objectMapper.readValue(objectMapper.treeAsTokens(json), object : TypeReference<T>() {})
     }
 }

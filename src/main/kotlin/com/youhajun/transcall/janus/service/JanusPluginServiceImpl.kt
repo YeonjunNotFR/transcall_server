@@ -1,5 +1,7 @@
 package com.youhajun.transcall.janus.service
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.youhajun.transcall.janus.dto.plugin.*
 import com.youhajun.transcall.janus.exception.JanusException
 import com.youhajun.transcall.janus.util.JanusTransactionHelper
@@ -7,7 +9,6 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
@@ -16,6 +17,7 @@ import org.springframework.web.reactive.socket.WebSocketSession
 @Service
 class JanusPluginServiceImpl(
     private val transactionHelper: JanusTransactionHelper,
+    private val objectMapper: ObjectMapper,
     @Qualifier("janusWebClient") private val client: WebClient,
 ) : JanusPluginService {
 
@@ -42,8 +44,9 @@ class JanusPluginServiceImpl(
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(request)
             .retrieve()
-            .bodyToMono(object : ParameterizedTypeReference<AttachResponse>() {})
-            .map { it.data }
+            .bodyToMono(JsonNode::class.java)
+            .doOnNext { logger.info("Janus attachManager raw response:\n{}", it.toPrettyString()) }
+            .map { transactionHelper.parseJanusResponse<AttachResponse>(it, objectMapper).data }
             .awaitSingleOrNull() ?: throw JanusException.JanusResponseMappingException()
     }.onFailure { logger.error(it) }
 

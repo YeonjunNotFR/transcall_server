@@ -7,9 +7,7 @@ import org.springframework.web.reactive.socket.WebSocketSession
 
 interface JanusVideoRoomService {
 
-    suspend fun createRoom(
-        janusRoomId: Long
-    ): Result<CreateRoomResponse>
+    suspend fun createRoom(): Result<CreateRoomResponse>
 
     suspend fun joinPublish(
         session: WebSocketSession,
@@ -38,7 +36,7 @@ interface JanusVideoRoomService {
         janusRoomId: Long,
         privateId: Long?,
         streams: List<SubscribeStreamBody>,
-    ): Result<JanusPluginResponse<VideoRoomSubscribeResponse>>
+    ): Result<JanusPluginResponse<VideoRoomSubscribeAttachedResponse>>
 
     suspend fun publish(
         session: WebSocketSession,
@@ -56,7 +54,7 @@ interface JanusVideoRoomService {
         handleId: Long,
         subscribe: List<SubscribeStreamBody>?,
         unsubscribe: List<SubscribeStreamBody>?,
-    ): Result<JanusPluginResponse<VideoRoomSubscribeResponse>>
+    ): Result<JanusPluginResponse<VideoRoomSubscribeUpdateResponse>>
 
     suspend fun start(
         session: WebSocketSession,

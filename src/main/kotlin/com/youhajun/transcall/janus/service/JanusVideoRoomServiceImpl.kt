@@ -15,7 +15,6 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
@@ -25,28 +24,32 @@ import org.springframework.web.reactive.socket.WebSocketSession
 class JanusVideoRoomServiceImpl(
     @Qualifier("janusWebClient") private val client: WebClient,
     private val transactionHelper: JanusTransactionHelper,
-    private val janusControlManager: JanusControlManager
+    private val janusControlManager: JanusControlManager,
+    private val objectMapper: ObjectMapper
 ) : JanusVideoRoomService {
 
     private val logger: Logger = LogManager.getLogger(JanusVideoRoomServiceImpl::class.java)
 
-    override suspend fun createRoom(janusRoomId: Long): Result<CreateRoomResponse> = runCatching {
+    override suspend fun createRoom(): Result<CreateRoomResponse> = runCatching {
         val sessionId = janusControlManager.getSessionId()
         val handleId = janusControlManager.getHandleId(JanusPlugin.VIDEO_ROOM)
-        val request = CreateRoomBody(janusRoomId = janusRoomId)
-        val janusRequest = JanusVideoRoomRequest(sessionId = sessionId, handleId = handleId, body = request)
+        val janusRequest = JanusVideoRoomRequest(sessionId = sessionId, handleId = handleId, body = CreateRoomBody)
+        val bodyString = objectMapper.writeValueAsString(janusRequest)
+        logger.info("Janus createRoom body:\n{}", objectMapper.readTree(bodyString).toPrettyString())
 
         client.post()
             .uri("/janus/$sessionId/$handleId")
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(janusRequest)
             .retrieve()
-            .bodyToMono(object : ParameterizedTypeReference<CreateRoomResponse>() {})
+            .bodyToMono(JsonNode::class.java)
+            .doOnNext { logger.info("Janus createRoom raw response:\n{}", it.toPrettyString()) }
+            .map { transactionHelper.parseJanusResponse<JanusPluginResponse<CreateRoomResponse>>(it, objectMapper).pluginData.data }
             .awaitSingleOrNull() ?: throw JanusException.JanusResponseMappingException()
     }.onFailure {
         logger.error(it)
-        if (it is JanusException.JanusResponseException && (it.code == 460 || it.code == 458)) {
-            janusControlManager.refreshSession()
+        if (it is JanusException.JanusResponseException) {
+            janusControlManager.refreshSessionCheck(it)
         }
     }
 
@@ -81,7 +84,7 @@ class JanusVideoRoomServiceImpl(
         janusRoomId: Long,
         privateId: Long?,
         streams: List<SubscribeStreamBody>,
-    ): Result<JanusPluginResponse<VideoRoomSubscribeResponse>> {
+    ): Result<JanusPluginResponse<VideoRoomSubscribeAttachedResponse>> {
         val body = JoinSubscriberBody(janusRoomId = janusRoomId, privateId = privateId, streams = streams)
         val req = JanusVideoRoomRequest(sessionId = sessionId, handleId = handleId, body = body)
         return transactionHelper.requestJanusResponse(session, req)
@@ -112,7 +115,7 @@ class JanusVideoRoomServiceImpl(
         handleId: Long,
         subscribe: List<SubscribeStreamBody>?,
         unsubscribe: List<SubscribeStreamBody>?,
-    ): Result<JanusPluginResponse<VideoRoomSubscribeResponse>> {
+    ): Result<JanusPluginResponse<VideoRoomSubscribeUpdateResponse>> {
         val body = UpdateBody(
             subscribe = subscribe.takeIf { !it.isNullOrEmpty() },
             unsubscribe = unsubscribe.takeIf { !it.isNullOrEmpty() },

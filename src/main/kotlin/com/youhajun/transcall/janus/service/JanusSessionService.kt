@@ -1,5 +1,6 @@
 package com.youhajun.transcall.janus.service
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.youhajun.transcall.janus.dto.auth.CreateSessionData
 import org.springframework.web.reactive.socket.WebSocketSession
 
@@ -13,4 +14,6 @@ interface JanusSessionService {
     suspend fun destroyManagerSession(sessionId: Long)
 
     suspend fun keepAlive(session: WebSocketSession, sessionId: Long)
+
+    suspend fun keepAliveManager(sessionId: Long): Result<JsonNode>
 }

@@ -32,6 +32,7 @@ CREATE TABLE call_conversation
     id              UUID        NOT NULL PRIMARY KEY,
     room_id         UUID        NOT NULL,
     sender_id       UUID,
+    state           VARCHAR(20) NOT NULL,
     origin_text     TEXT        NOT NULL,
     origin_language VARCHAR(20) NOT NULL,
     created_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -46,7 +47,6 @@ CREATE TABLE call_conversation_trans
     id                  UUID        NOT NULL PRIMARY KEY,
     room_id             UUID        NOT NULL,
     conversation_id     UUID        NOT NULL,
-    receiver_id         UUID,
     translated_text     TEXT        NOT NULL,
     translated_language VARCHAR(20) NOT NULL,
     created_at          TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -54,8 +54,7 @@ CREATE TABLE call_conversation_trans
 
     CONSTRAINT fk_conversation_trans_room_id FOREIGN KEY (room_id) REFERENCES call_room (id) ON DELETE CASCADE,
     CONSTRAINT fk_conversation_trans_conversation_id FOREIGN KEY (conversation_id) REFERENCES call_conversation (id) ON DELETE CASCADE,
-    CONSTRAINT fk_conversation_receiver_id FOREIGN KEY (receiver_id) REFERENCES users (id) ON DELETE SET NULL,
-    CONSTRAINT uq_conversation_receiver UNIQUE (conversation_id, receiver_id)
+    CONSTRAINT uq_conversation_language UNIQUE (conversation_id, translated_language)
 );
 
 CREATE TABLE IF NOT EXISTS call_history

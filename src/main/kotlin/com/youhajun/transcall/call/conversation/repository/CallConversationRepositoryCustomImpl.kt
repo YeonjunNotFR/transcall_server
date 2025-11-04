@@ -1,14 +1,17 @@
 package com.youhajun.transcall.call.conversation.repository
 
 import com.youhajun.transcall.call.conversation.domain.CallConversation
+import com.youhajun.transcall.call.conversation.domain.ConversationState
 import com.youhajun.transcall.common.vo.TimeRange
 import com.youhajun.transcall.pagination.cursor.UUIDCursor
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.data.domain.Sort
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.data.r2dbc.core.select
+import org.springframework.data.r2dbc.core.update
 import org.springframework.data.relational.core.query.Criteria
 import org.springframework.data.relational.core.query.Query
+import org.springframework.data.relational.core.query.Update
 import org.springframework.stereotype.Repository
 import java.util.*
 
@@ -18,6 +21,7 @@ class CallConversationRepositoryCustomImpl(
 ) : CallConversationRepositoryCustom {
 
     private val select = template.select<CallConversation>()
+    private val update = template.update<CallConversation>()
 
     override suspend fun findPageByTimeRangeAndCursorOldest(
         roomId: UUID,
@@ -66,6 +70,16 @@ class CallConversationRepositoryCustomImpl(
             .all()
             .collectList()
             .awaitSingleOrNull() ?: emptyList()
+    }
+
+    override suspend fun updateConversationOriginText(conversationId: UUID, originText: String) {
+        val criteria = Criteria.where("id").`is`(conversationId)
+        val query = Update.update("origin_text", originText).set("state", ConversationState.FINAL)
+
+        update
+            .matching(Query.query(criteria))
+            .apply(query)
+            .awaitSingleOrNull()
     }
 
 }

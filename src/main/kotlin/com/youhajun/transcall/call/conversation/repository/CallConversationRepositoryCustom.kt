@@ -21,4 +21,6 @@ interface CallConversationRepositoryCustom {
         limit: Int,
         updatedAfterEpochTime: Long,
     ): List<CallConversation>
+
+    suspend fun updateConversationOriginText(conversationId: UUID, originText: String)
 }

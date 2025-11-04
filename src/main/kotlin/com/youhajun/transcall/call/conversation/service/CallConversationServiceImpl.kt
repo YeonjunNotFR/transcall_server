@@ -2,12 +2,10 @@ package com.youhajun.transcall.call.conversation.service
 
 import com.youhajun.transcall.call.conversation.domain.CallConversation
 import com.youhajun.transcall.call.conversation.domain.CallConversationTrans
-import com.youhajun.transcall.call.conversation.domain.ConversationCache
 import com.youhajun.transcall.call.conversation.dto.ConversationResponse
 import com.youhajun.transcall.call.conversation.exception.ConversationException
 import com.youhajun.transcall.call.conversation.repository.CallConversationRepository
 import com.youhajun.transcall.call.conversation.repository.CallConversationTransRepository
-import com.youhajun.transcall.call.conversation.repository.ConversationCacheRepository
 import com.youhajun.transcall.call.participant.service.CallParticipantService
 import com.youhajun.transcall.common.vo.TimeRange
 import com.youhajun.transcall.pagination.CursorPaginationHelper
@@ -15,16 +13,14 @@ import com.youhajun.transcall.pagination.cursor.UUIDCursor
 import com.youhajun.transcall.pagination.cursor.UUIDCursorCodec
 import com.youhajun.transcall.pagination.dto.CursorPage
 import com.youhajun.transcall.pagination.vo.CursorPagination
-import kotlinx.coroutines.flow.Flow
+import com.youhajun.transcall.user.domain.LanguageType
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
 import java.time.Duration
 import java.time.Instant
-import java.time.ZoneOffset
 import java.util.*
 
 @Service
@@ -32,50 +28,31 @@ class CallConversationServiceImpl(
     private val transactionalOperator: TransactionalOperator,
     private val callParticipantService: CallParticipantService,
     private val conversationRepository: CallConversationRepository,
-    private val transConversationRepo: CallConversationTransRepository,
-    private val conversationCacheRepository: ConversationCacheRepository,
+    private val transConversationRepository: CallConversationTransRepository,
 ) : CallConversationService {
-
-    companion object {
-        private val CONVERSATION_CACHE_TTL = Duration.ofHours(24)
-    }
 
     private val logger: Logger = LogManager.getLogger(CallConversationServiceImpl::class.java)
 
-    override suspend fun publishConversationCache(roomId: UUID, userId: UUID, cache: ConversationCache) {
-        transactionalOperator.executeAndAwait {
-            val existing = conversationCacheRepository.getConversationCache(roomId, userId)
-
-            val newCache = if (existing != null && existing.start == cache.start) {
-                existing.copy(originText = cache.originText)
-            } else {
-                cache.also { if (existing != null) saveFinalConversation(roomId, userId, existing) }
-            }
-
-            conversationCacheRepository.publishCache(roomId, userId, newCache, CONVERSATION_CACHE_TTL)
+    override suspend fun saveConversation(
+        roomId: UUID,
+        senderId: UUID,
+        originText: String,
+        originLanguage: LanguageType
+    ): CallConversation {
+        return transactionalOperator.executeAndAwait {
+            val conversation = CallConversation(
+                roomId = roomId,
+                senderId = senderId,
+                originText = originText,
+                originLanguage = originLanguage
+            )
+            conversationRepository.save(conversation)
         }
     }
 
-    override suspend fun subscribeConversationCache(roomId: UUID, userId: UUID): Flow<ConversationCache> {
-        return conversationCacheRepository.subscribeCache(roomId, userId)
-    }
-
-    private suspend fun saveFinalConversation(roomId: UUID, userId: UUID, cache: ConversationCache): Boolean {
-        return transactionalOperator.executeAndAwait {
-            try {
-                val conversation = CallConversation(
-                    uuid = cache.uuid,
-                    roomId = roomId,
-                    senderId = userId,
-                    originText = cache.originText,
-                    originLanguage = cache.originLanguage
-                )
-                conversationRepository.save(conversation)
-                true
-            } catch (e: DuplicateKeyException) {
-                logger.info("Duplicate key exception occurred: ${e.message}")
-                false
-            }
+    override suspend fun updateConversationText(conversationId: UUID, text: String) {
+        transactionalOperator.executeAndAwait {
+            conversationRepository.updateConversationOriginText(conversationId, text)
         }
     }
 
@@ -94,7 +71,13 @@ class CallConversationServiceImpl(
             codec = UUIDCursorCodec,
             fetchFunc = { cursor, limit ->
                 val noneNullCursor = cursor ?: throw ConversationException.ConversationSyncNeedAfter()
-                val conversationList = conversationRepository.findPageByTimeRangeSyncNewest(roomId, timeRange, noneNullCursor, limit, updatedAfterEpochTime)
+                val conversationList = conversationRepository.findPageByTimeRangeSyncNewest(
+                    roomId,
+                    timeRange,
+                    noneNullCursor,
+                    limit,
+                    updatedAfterEpochTime
+                )
                 getConversationsResponse(userId, conversationList)
             },
             convertItemToCursorFunc = {
@@ -124,9 +107,13 @@ class CallConversationServiceImpl(
         )
     }
 
-    private suspend fun getConversationsResponse(userId: UUID, conversations: List<CallConversation>): List<ConversationResponse> {
+    private suspend fun getConversationsResponse(
+        userId: UUID,
+        conversations: List<CallConversation>
+    ): List<ConversationResponse> {
         val conversationIdList = conversations.map { it.id }
-        val transList = transConversationRepo.findByConversationIdsAndReceiverId(conversationIdList, userId)
+        val targetLanguage = LanguageType.ENGLISH
+        val transList = transConversationRepository.findByConversationIdsAndLanguage(conversationIdList, targetLanguage)
         val transMap = transList.associateBy { it.conversationId }
         return mapToConversationResponses(conversations, transMap)
     }
@@ -136,16 +123,9 @@ class CallConversationServiceImpl(
         transMap: Map<UUID, CallConversationTrans>
     ): List<ConversationResponse> = conversationList.map { conv ->
         val trans = transMap[conv.id]
-        ConversationResponse(
-            conversationId = conv.id.toString(),
-            roomId = conv.roomId.toString(),
-            senderId = conv.senderId.toString(),
-            originText = conv.originText,
-            originLanguage = conv.originLanguage,
-            transText = trans?.translatedText ?: conv.originText,
-            transLanguage = trans?.translatedLanguage ?: conv.originLanguage,
-            createdAtToEpochTime = conv.createdAt.epochSecond,
-            updatedAtToEpochTime = conv.updatedAt.epochSecond,
+        conv.toConversationResponse(
+            transText = trans?.translatedText,
+            transLanguage = trans?.translatedLanguage,
         )
     }
 }

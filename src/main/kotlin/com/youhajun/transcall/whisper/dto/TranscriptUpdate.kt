@@ -17,9 +17,11 @@ data class Segment(
     val startSpeaker: Double,
     val start: Double,
     val end: Double,
-    val language: String?,
-    val words: List<Word>,
-    val buffer: Buffer
+    val language: String? = null,
+    val words: List<Word> = emptyList(),
+    val buffer: Buffer = Buffer(),
+    @JsonProperty("is_finalized")
+    val isFinal: Boolean
 )
 
 data class Word(
@@ -35,14 +37,14 @@ data class Validated(
 )
 
 data class Buffer(
-    val transcription: String,
-    val diarization: String,
-    val translation: String
+    val transcription: String = "",
+    val diarization: String = "",
+    val translation: String = ""
 )
 
 data class Metadata(
     @JsonProperty("remaining_time_transcription")
-    val remainingTimeTranscription: Double?,
+    val remainingTimeTranscription: Double? = null,
     @JsonProperty("remaining_time_diarization")
-    val remainingTimeDiarization: Double?
+    val remainingTimeDiarization: Double? = null
 )

@@ -15,10 +15,7 @@ sealed interface JoinBody : VideoRoomBody {
     val ptype: PeerType
 }
 
-data class CreateRoomBody(
-    @JsonProperty("room")
-    val janusRoomId: Long
-) : VideoRoomBody {
+data object CreateRoomBody : VideoRoomBody {
     override val request = VideoRoomRequestType.CREATE
 }
 
@@ -85,8 +82,8 @@ data class UpdateBody(
 data class SubscribeStreamBody(
     @JsonProperty("feed")
     val feedId: Long,
-    val mid: String? = null,
-    val crossrefid: String? = null
+    val mid: String,
+    val crossrefid: String
 )
 
 data class StreamDescription(

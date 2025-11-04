@@ -14,7 +14,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 @JsonSubTypes(
     JsonSubTypes.Type(value = JoinPublisherResponse::class, name = "joined"),
     JsonSubTypes.Type(value = VideoRoomEventResponse::class, name = "event"),
-    JsonSubTypes.Type(value = VideoRoomSubscribeResponse::class, name = "updated")
+    JsonSubTypes.Type(value = VideoRoomSubscribeUpdateResponse::class, name = "updated"),
+    JsonSubTypes.Type(value = VideoRoomSubscribeAttachedResponse::class, name = "attached")
 )
 sealed interface VideoRoomResponse {
     val videoRoom: VideoRoomResponseType
@@ -41,13 +42,22 @@ data class VideoRoomEventResponse(
     override val videoRoom = VideoRoomResponseType.EVENT
 }
 
-data class VideoRoomSubscribeResponse(
+data class VideoRoomSubscribeUpdateResponse(
     @JsonProperty("room")
     val roomId: String,
     val streams: List<SubscribeStreamResponse> = emptyList()
 ) : VideoRoomResponse {
     @JsonProperty("videoroom")
     override val videoRoom: VideoRoomResponseType = VideoRoomResponseType.UPDATED
+}
+
+data class VideoRoomSubscribeAttachedResponse(
+    @JsonProperty("room")
+    val roomId: String,
+    val streams: List<SubscribeStreamResponse> = emptyList()
+) : VideoRoomResponse {
+    @JsonProperty("videoroom")
+    override val videoRoom: VideoRoomResponseType = VideoRoomResponseType.ATTACHED
 }
 
 data class JanusPublisherResponse(

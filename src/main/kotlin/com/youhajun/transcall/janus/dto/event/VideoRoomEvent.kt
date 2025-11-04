@@ -34,7 +34,9 @@ data class OnUnpublished(
     @JsonProperty("room")
     override val roomId: Long,
     @JsonProperty("unpublished")
-    val unpublished: Any?
+    val unpublished: Any?,
+    @JsonProperty("display")
+    val display: String?
 ) : VideoRoomEvent
 
 data class OnLeaving(

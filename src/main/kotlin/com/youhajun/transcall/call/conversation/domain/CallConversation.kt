@@ -1,6 +1,7 @@
 package com.youhajun.transcall.call.conversation.domain
 
 import com.fasterxml.uuid.Generators
+import com.youhajun.transcall.call.conversation.dto.ConversationResponse
 import com.youhajun.transcall.common.domain.BaseUUIDEntity
 import com.youhajun.transcall.user.domain.LanguageType
 import org.springframework.data.annotation.Id
@@ -21,7 +22,23 @@ data class CallConversation(
     val originText: String,
     @Column("origin_language")
     val originLanguage: LanguageType,
-) : BaseUUIDEntity()
     @Column("state")
     val state: ConversationState = ConversationState.PENDING,
 ) : BaseUUIDEntity() {
+
+    fun toConversationResponse(
+        transText: String?,
+        transLanguage: LanguageType?,
+    ) = ConversationResponse(
+        conversationId = uuid.toString(),
+        roomId = roomId.toString(),
+        state = state,
+        senderId = senderId?.toString(),
+        originText = originText,
+        originLanguage = originLanguage,
+        transText = transText,
+        transLanguage = transLanguage,
+        createdAtToEpochTime = createdAt.epochSecond,
+        updatedAtToEpochTime = updatedAt.epochSecond,
+    )
+}

@@ -38,6 +38,7 @@ class CallRoomServiceImpl(
     }
 
     override suspend fun createRoom(userId: UUID, request: CreateRoomRequest): UUID {
+        val janusRoom = janusVideoRoomService.createRoom().getOrNull() ?: throw RoomException.JanusRoomCreateFailed()
         return transactionalOperator.executeAndAwait {
             val room = CallRoom(
                 hostId = userId,
@@ -47,16 +48,13 @@ class CallRoomServiceImpl(
                 visibility = request.visibility,
                 tags = request.tags,
                 roomCode = generateUniqueRoomCode(),
+                janusRoomId = janusRoom.janusRoomId,
                 joinType = RoomJoinType.CODE_JOIN,
             )
 
             val saved = callRoomRepository.save(room)
-            val reloaded = callRoomRepository.findById(saved.id) ?: throw RoomException.RoomNotFound()
-
-            val janusRoomId = reloaded.requireJanusRoomId()
-            janusVideoRoomService.createRoom(janusRoomId).getOrThrow()
-            janusRoomIdCacheRepository.saveJanusRoomId(reloaded.id, janusRoomId, JANUS_ROOM_ID_CACHE_TTL)
-            reloaded.id
+            janusRoomIdCacheRepository.saveJanusRoomId(saved.id, janusRoom.janusRoomId, JANUS_ROOM_ID_CACHE_TTL)
+            saved.id
         }
     }
 
@@ -114,7 +112,7 @@ class CallRoomServiceImpl(
             }
 
             val room = callRoomRepository.findById(roomId) ?: throw RoomException.RoomNotFound()
-            return@executeAndAwait room.requireJanusRoomId().also {
+            return@executeAndAwait room.janusRoomId.also {
                 janusRoomIdCacheRepository.saveJanusRoomId(roomId, it, JANUS_ROOM_ID_CACHE_TTL)
             }
         }

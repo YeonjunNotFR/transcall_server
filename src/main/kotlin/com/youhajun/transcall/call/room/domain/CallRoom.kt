@@ -30,16 +30,12 @@ data class CallRoom(
     @Column("join_type")
     val joinType: RoomJoinType,
     @Column("janus_room_id")
-    val janusRoomId: Long? = null,
+    val janusRoomId: Long,
     @Column("tags")
     val tags: Set<String> = emptySet(),
     @Column("status")
     val status: RoomStatus = RoomStatus.WAITING,
 ) : BaseUUIDEntity() {
-
-    fun requireJanusRoomId(): Long = requireNotNull(janusRoomId) {
-        "Janus room ID is not set for room with ID: $uuid"
-    }
 
     fun toRoomInfoResponse() = RoomInfoResponse(
         roomId = uuid.toString(),

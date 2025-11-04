@@ -22,3 +22,6 @@ data class CallConversation(
     @Column("origin_language")
     val originLanguage: LanguageType,
 ) : BaseUUIDEntity()
+    @Column("state")
+    val state: ConversationState = ConversationState.PENDING,
+) : BaseUUIDEntity() {

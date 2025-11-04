@@ -17,8 +17,6 @@ data class CallConversationTrans(
     val roomId: UUID,
     @Column("conversation_id")
     val conversationId: UUID,
-    @Column("receiver_id")
-    val receiverId: UUID?,
     @Column("translated_text")
     val translatedText: String,
     @Column("translated_language")

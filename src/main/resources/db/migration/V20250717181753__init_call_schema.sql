@@ -18,9 +18,9 @@ CREATE TABLE IF NOT EXISTS call_room
     tags                       VARCHAR(50)[],
     status                     VARCHAR(20) NOT NULL,
     join_type                  VARCHAR(20) NOT NULL,
-    janus_room_id              BIGINT      NOT NULL UNIQUE DEFAULT nextval('janus_room_id_seq'),
-    created_at                 TIMESTAMP WITH TIME ZONE    DEFAULT CURRENT_TIMESTAMP,
-    updated_at                 TIMESTAMP WITH TIME ZONE    DEFAULT CURRENT_TIMESTAMP,
+    janus_room_id              BIGINT      NOT NULL UNIQUE,
+    created_at                 TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at                 TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_callroom_host_user FOREIGN KEY (host_id) REFERENCES users (id) ON DELETE SET NULL
 );

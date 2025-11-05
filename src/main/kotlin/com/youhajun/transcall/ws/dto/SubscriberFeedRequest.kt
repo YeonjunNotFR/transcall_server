@@ -9,7 +9,7 @@ data class SubscriberFeedRequest(
 ) {
     fun toSubscribeStreamRequest() = SubscribeStreamBody(
         feedId = feedId,
-        mid = mid,
-        crossrefid = crossrefid
+        mid = mid ?: "",
+        crossrefid = crossrefid ?: ""
     )
 }

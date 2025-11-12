@@ -38,10 +38,12 @@ services:
       - "8086:8086"           # Nginx (demo page 서빙)
       - "8088:8088"           # HTTP REST API
       - "8188:8188"           # WebSocket
-      - "40000-40100:40000-40100/udp" # 미디어 포트
+      - "7088:7088"           # HTTP ADMIN
+      - "40000-40100:40000-40100/udp" # UDP 포트
     volumes:
       - ./janus/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./janus/janus.jcfg:/usr/local/etc/janus/janus.jcfg:ro
+      - ./janus/janus.transport.http.jcfg:/usr/local/etc/janus/janus.transport.http.jcfg:ro
     restart: unless-stopped
 
   whisper-en:

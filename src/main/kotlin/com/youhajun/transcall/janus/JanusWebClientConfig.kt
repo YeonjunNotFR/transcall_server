@@ -10,7 +10,14 @@ class JanusWebClientConfig {
     @Bean
     fun janusWebClient(builder: WebClient.Builder): WebClient {
         return builder
-            .baseUrl("http://localhost:8088")
+            .baseUrl("http://localhost:8088/janus")
+            .build()
+    }
+
+    @Bean
+    fun janusAdminWebClient(builder: WebClient.Builder): WebClient {
+        return builder
+            .baseUrl("http://localhost:7088/admin")
             .build()
     }
 }

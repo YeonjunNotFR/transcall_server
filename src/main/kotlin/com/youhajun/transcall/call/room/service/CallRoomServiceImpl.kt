@@ -10,8 +10,10 @@ import com.youhajun.transcall.call.room.dto.RoomInfoResponse
 import com.youhajun.transcall.call.room.exception.RoomException
 import com.youhajun.transcall.call.room.repository.CallRoomRepository
 import com.youhajun.transcall.call.room.repository.JanusRoomIdCacheRepository
-import com.youhajun.transcall.janus.service.JanusVideoRoomService
 import com.youhajun.transcall.common.vo.SortDirection
+import com.youhajun.transcall.janus.dto.JanusPlugin
+import com.youhajun.transcall.janus.service.JanusRoomService
+import com.youhajun.transcall.janus.service.JanusService
 import com.youhajun.transcall.pagination.CursorPaginationHelper
 import com.youhajun.transcall.pagination.cursor.UUIDCursor
 import com.youhajun.transcall.pagination.cursor.UUIDCursorCodec
@@ -29,7 +31,8 @@ class CallRoomServiceImpl(
     private val callRoomRepository: CallRoomRepository,
     private val janusRoomIdCacheRepository: JanusRoomIdCacheRepository,
     private val callParticipantService: CallParticipantService,
-    private val janusVideoRoomService: JanusVideoRoomService,
+    private val janusRoomService: JanusRoomService,
+    private val janusService: JanusService
 ) : CallRoomService {
 
     companion object {
@@ -38,23 +41,30 @@ class CallRoomServiceImpl(
     }
 
     override suspend fun createRoom(userId: UUID, request: CreateRoomRequest): UUID {
-        val janusRoom = janusVideoRoomService.createRoom().getOrNull() ?: throw RoomException.JanusRoomCreateFailed()
-        return transactionalOperator.executeAndAwait {
-            val room = CallRoom(
-                hostId = userId,
-                title = request.title,
-                maxParticipants = request.maxParticipantCount,
-                currentParticipantsCount = 0,
-                visibility = request.visibility,
-                tags = request.tags,
-                roomCode = generateUniqueRoomCode(),
-                janusRoomId = janusRoom.janusRoomId,
-                joinType = RoomJoinType.CODE_JOIN,
-            )
+        var sessionId: Long? = null
+        return try {
+            sessionId = janusService.createHttpSession().getOrThrow()
+            val handleId = janusService.attachHttpPlugin(sessionId, JanusPlugin.VIDEO_ROOM.pkgName).getOrThrow()
+            val janusRoomId = janusRoomService.createRoom(sessionId, handleId).getOrThrow()
+            transactionalOperator.executeAndAwait {
+                val room = CallRoom(
+                    hostId = userId,
+                    title = request.title,
+                    maxParticipants = request.maxParticipantCount,
+                    currentParticipantsCount = 0,
+                    visibility = request.visibility,
+                    tags = request.tags,
+                    roomCode = generateUniqueRoomCode(),
+                    janusRoomId = janusRoomId,
+                    joinType = RoomJoinType.CODE_JOIN,
+                )
 
-            val saved = callRoomRepository.save(room)
-            janusRoomIdCacheRepository.saveJanusRoomId(saved.id, janusRoom.janusRoomId, JANUS_ROOM_ID_CACHE_TTL)
-            saved.id
+                val saved = callRoomRepository.save(room)
+                janusRoomIdCacheRepository.saveJanusRoomId(saved.id, janusRoomId, JANUS_ROOM_ID_CACHE_TTL)
+                saved.id
+            }
+        } finally {
+            sessionId?.let { janusService.destroyHttpSession(it) }
         }
     }
 

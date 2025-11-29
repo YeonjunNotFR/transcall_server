@@ -6,7 +6,9 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import org.springframework.util.MultiValueMap
 import org.springframework.web.reactive.socket.WebSocketSession
+import org.springframework.web.util.UriComponentsBuilder
 import reactor.core.publisher.Mono
 
 private val logger: Logger = LogManager.getLogger("WebSocketExt")
@@ -24,3 +26,8 @@ suspend fun WebSocketSession.sendBinaryMessage(message: ByteArray) {
     val wsMsg = binaryMessage { factory -> factory.wrap(message) }
     send(Mono.just(wsMsg)).awaitFirstOrNull()
 }
+
+fun WebSocketSession.getParams(): MultiValueMap<String, String> = UriComponentsBuilder
+    .fromUri(handshakeInfo.uri)
+    .build()
+    .queryParams

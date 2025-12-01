@@ -1,45 +1,39 @@
 package com.youhajun.transcall.ws.dto.payload
 
-import com.youhajun.transcall.ws.dto.SubscriberFeedRequest
+import com.youhajun.transcall.janus.dto.JanusIceCandidate
+import com.youhajun.transcall.janus.dto.SubscriberStream
 import com.youhajun.transcall.ws.vo.MediaContentType
 
 sealed interface SignalingRequest : RequestPayload
 
-data class JoinRoomPublisher(
+data class JoinPublisher(
     val mediaContentType: MediaContentType,
-    val handleId: Long,
 ) : SignalingRequest {
     companion object {
         const val ACTION = "joinPublisher"
     }
 }
 
-data class PublisherOffer(
-    val offerSdp: String,
-    val mediaContentType: MediaContentType,
-    val handleId: Long,
-    val audioCodec: String?,
-    val videoCodec: String?,
-    val videoMid: String?,
-    val audioMid: String?,
-) : SignalingRequest {
-    companion object {
-        const val ACTION = "publisherOffer"
-    }
-}
-
-data class JoinRoomSubscriber(
-    val privateId: Long,
-    val feeds: List<SubscriberFeedRequest>,
+data class JoinSubscriber(
+    val privateId: Long?,
+    val subscribeFeeds: List<SubscriberStream>
 ) : SignalingRequest {
     companion object {
         const val ACTION = "joinSubscriber"
     }
 }
 
+data class PublisherOffer(
+    val offerSdp: String,
+    val mediaContentType: MediaContentType,
+) : SignalingRequest {
+    companion object {
+        const val ACTION = "publisherOffer"
+    }
+}
+
 data class SubscriberAnswer(
     val answerSdp: String,
-    val handleId: Long
 ) : SignalingRequest {
     companion object {
         const val ACTION = "subscriberAnswer"
@@ -47,8 +41,8 @@ data class SubscriberAnswer(
 }
 
 data class SubscriberUpdate(
-    val subscribeFeeds: List<SubscriberFeedRequest>,
-    val unsubscribeFeeds: List<SubscriberFeedRequest>,
+    val subscribeFeeds: List<SubscriberStream>,
+    val unsubscribeFeeds: List<SubscriberStream>,
 ) : SignalingRequest {
     companion object {
         const val ACTION = "subscriberUpdate"
@@ -56,20 +50,20 @@ data class SubscriberUpdate(
 }
 
 data class SignalingIceCandidate(
-    val handleId: Long,
-    val candidate: String,
-    val sdpMid: String?,
-    val sdpMLineIndex: Int,
-) : SignalingRequest {
+    val mediaContentType: MediaContentType,
+    val isPublisher: Boolean,
+    val janusCandidate: JanusIceCandidate,
+) : SignalingRequest, SignalingResponse {
     companion object {
         const val ACTION = "iceCandidate"
     }
 }
 
-data class CompleteIceCandidate(
-    val handleId: Long,
+data class IceCandidateComplete(
+    val mediaContentType: MediaContentType,
+    val isPublisher: Boolean,
 ) : SignalingRequest {
     companion object {
-        const val ACTION = "completeIceCandidate"
+        const val ACTION = "iceCandidateComplete"
     }
 }

@@ -1,41 +1,15 @@
 package com.youhajun.transcall.ws.dto.payload
 
-import com.youhajun.transcall.ws.dto.PublisherFeedResponse
-import com.youhajun.transcall.ws.dto.SubscriberFeedResponse
+import com.youhajun.transcall.janus.dto.JanusIceCandidate
+import com.youhajun.transcall.janus.dto.PublisherInfo
+import com.youhajun.transcall.janus.dto.StreamInfo
 import com.youhajun.transcall.ws.vo.MediaContentType
 
 sealed interface SignalingResponse : ResponsePayload
 
-data class JoinedRoomPublisher(
-    val publisherHandleId: Long,
-    val mediaContentType: MediaContentType,
-    val feeds: List<PublisherFeedResponse>,
-    val privateId: Long? = null
-) : SignalingResponse {
-    companion object {
-        const val ACTION = "joinedPublisher"
-    }
-}
-
-data class NewPublishers(
-    val feeds: List<PublisherFeedResponse>,
-) : SignalingResponse {
-    companion object {
-        const val ACTION = "onNewPublisher"
-    }
-}
-
-data class Unpublished(
-    val feedId: Long,
-) : SignalingResponse {
-    companion object {
-        const val ACTION = "unpublished"
-    }
-}
-
 data class PublisherAnswer(
-    val publisherHandleId: Long,
-    val answerSdp: String
+    val answerSdp: String,
+    val mediaContentType: MediaContentType
 ) : SignalingResponse {
     companion object {
         const val ACTION = "publisherAnswer"
@@ -43,22 +17,38 @@ data class PublisherAnswer(
 }
 
 data class SubscriberOffer(
-    val subscriberHandleId: Long,
     val offerSdp: String,
-    val feeds: List<SubscriberFeedResponse>,
+    val feeds: List<StreamInfo>
 ) : SignalingResponse {
     companion object {
         const val ACTION = "subscriberOffer"
     }
 }
 
-data class OnIceCandidate(
-    val handleId: Long,
-    val candidate: String,
-    val sdpMid: String?,
-    val sdpMLineIndex: Int,
-): SignalingResponse {
+data class JoinedEvent(
+    val myFeedId: Long,
+    val privateId: Long,
+    val publishers: List<PublisherInfo>,
+    val mediaContentType: MediaContentType
+) : SignalingResponse {
     companion object {
-        const val ACTION = "onIceCandidate"
+        const val ACTION = "joined"
+    }
+}
+
+data class NewPublisherEvent(
+    val mediaContentType: MediaContentType,
+    val publishers: List<PublisherInfo>
+) : SignalingResponse {
+    companion object {
+        const val ACTION = "newPublisherEvent"
+    }
+}
+
+data class PublisherUnpublished(
+    val feedId: Long
+) : SignalingResponse {
+    companion object {
+        const val ACTION = "publisherUnpublished"
     }
 }

@@ -9,7 +9,6 @@ sealed interface RoomResponsePayload : ResponsePayload
 data class ConnectedRoom(
     val roomInfo: RoomInfoResponse,
     val participants: List<CallParticipantResponse>,
-    val videoRoomHandleInfo: VideoRoomHandleInfo,
 ) : RoomResponsePayload {
     companion object {
         const val ACTION = "connected"

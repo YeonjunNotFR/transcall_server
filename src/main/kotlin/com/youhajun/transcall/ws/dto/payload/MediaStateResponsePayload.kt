@@ -1,6 +1,6 @@
 package com.youhajun.transcall.ws.dto.payload
 
-import com.youhajun.transcall.ws.vo.RoomParticipantSession
+import com.youhajun.transcall.ws.vo.RoomParticipantContext
 
 sealed interface MediaStateResponse : ResponsePayload
 
@@ -26,7 +26,7 @@ data class MediaState(
     val cameraEnabled: Boolean,
 )
 
-fun RoomParticipantSession.toMediaStateDto(): MediaState = MediaState(
+fun RoomParticipantContext.toMediaStateDto(): MediaState = MediaState(
     userId = userId.toString(),
     micEnabled = mediaState.isMicEnabled,
     cameraEnabled = mediaState.isCameraEnabled

@@ -1,195 +1,148 @@
 package com.youhajun.transcall.ws.handler
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.youhajun.transcall.janus.dto.event.*
-import com.youhajun.transcall.janus.dto.plugin.JanusPlugin
-import com.youhajun.transcall.janus.dto.plugin.TrickleCandidateBody
-import com.youhajun.transcall.janus.dto.video.VideoRoomJsep
-import com.youhajun.transcall.janus.service.JanusPluginService
-import com.youhajun.transcall.janus.service.JanusSessionService
-import com.youhajun.transcall.janus.service.JanusVideoRoomService
-import com.youhajun.transcall.janus.ws.JanusWebSocketClient
+import com.youhajun.transcall.janus.dto.JanusPlugin
+import com.youhajun.transcall.janus.service.JanusService
+import com.youhajun.transcall.janus.service.JanusSignalingService
+import com.youhajun.transcall.janus.JanusWebSocketClient
+import com.youhajun.transcall.janus.dto.*
 import com.youhajun.transcall.ws.dto.ServerMessage
 import com.youhajun.transcall.ws.dto.payload.*
-import com.youhajun.transcall.ws.dto.toPublisherFeedResponse
-import com.youhajun.transcall.ws.exception.WebSocketException
 import com.youhajun.transcall.ws.sendServerMessage
 import com.youhajun.transcall.ws.session.RoomSessionManager
-import com.youhajun.transcall.ws.vo.*
+import com.youhajun.transcall.ws.vo.JanusSessionInfo
+import com.youhajun.transcall.ws.vo.MediaContentType
+import com.youhajun.transcall.ws.vo.MessageType
+import com.youhajun.transcall.ws.vo.VideoRoomHandleInfo
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.socket.WebSocketSession
 import java.util.*
-import kotlin.coroutines.coroutineContext
 
 @Component
 class JanusHandler(
-    private val objectMapper: ObjectMapper,
     private val roomSessionManager: RoomSessionManager,
+    private val janusService: JanusService,
+    private val janusSignalingService: JanusSignalingService,
     private val janusWebSocketClient: JanusWebSocketClient,
-    private val janusSessionService: JanusSessionService,
-    private val janusPluginService: JanusPluginService,
-    private val janusVideoRoomService: JanusVideoRoomService
+    private val objectMapper: ObjectMapper
 ) {
-    companion object {
-        private const val KEEP_ALIVE_INTERVAL_MS = 30000L
-    }
-
     private val logger: Logger = LogManager.getLogger(JanusHandler::class.java)
 
-    suspend fun connectJanus(roomId: UUID, userId: UUID): WebSocketSession {
-        val janusConnection = janusWebSocketClient.connect()
-        val janusSessionId = janusSessionService.createSession(janusConnection.session).getOrThrow().sessionId
-        val videoRoomHandleInfo = getVideoRoomHandleInfo(janusConnection.session, janusSessionId)
+    suspend fun setupJanus(roomId: UUID, userId: UUID) {
+        logger.info("Setting up Janus for $userId")
+        val session = janusWebSocketClient.connect { response ->
+            CoroutineScope(Dispatchers.IO).launch {
+                handleJanusAsyncEvent(roomId, userId, response)
+            }
+        }
+
+        val sessionId = janusService.createSession(session).getOrThrow()
+
+        val handleInfo = coroutineScope {
+            val pubDefault = async { janusService.attachPlugin(session, sessionId, JanusPlugin.VIDEO_ROOM.pkgName).getOrThrow() }
+            val pubScreen = async { janusService.attachPlugin(session, sessionId, JanusPlugin.VIDEO_ROOM.pkgName).getOrThrow() }
+            val sub = async { janusService.attachPlugin(session, sessionId, JanusPlugin.VIDEO_ROOM.pkgName).getOrThrow() }
+
+            VideoRoomHandleInfo(
+                defaultPublisherHandleId = pubDefault.await(),
+                screenSharePublisherHandleId = pubScreen.await(),
+                subscriberHandleId = sub.await()
+            )
+        }
+
         val runtimeJob = SupervisorJob()
 
-        val janusSessionInfo = JanusSessionInfo(
-            janusSession = janusConnection.session,
-            janusSessionId = janusSessionId,
-            videoRoomHandleInfo = videoRoomHandleInfo,
+        val janusSession = JanusSessionInfo(
+            session = session,
+            sessionId = sessionId,
+            handleInfo = handleInfo,
             runtimeJob = runtimeJob
         )
+        roomSessionManager.updateUserSession(roomId, userId) { it.copy(janusSessionInfo = janusSession) }
+        janusService.startKeepAlive(janusSession, CoroutineScope(Dispatchers.IO + runtimeJob))
+    }
 
-        roomSessionManager.updateUserSession(roomId, userId) {
-            it.copy(janusSessionInfo = janusSessionInfo)
+    private suspend fun handleJanusAsyncEvent(roomId: UUID, userId: UUID, response: JanusResponse) {
+        when (response) {
+            is JanusEventResponse -> {
+                val data = response.plugindata?.data as? VideoRoomData.Event ?: return
+                processVideoRoomEvent(roomId, userId, data)
+            }
+
+            is JanusTrickleResponse -> {
+                val handleInfo = roomSessionManager.requireJanusSession(roomId, userId).handleInfo
+
+                when(response.candidate) {
+                    is JanusIceCandidate -> {
+                        val handleId = response.sender ?: return
+                        val (isPublisher, mediaContentType) = handleInfo.identifyHandle(handleId) ?: return
+                        val payload = SignalingIceCandidate(
+                            isPublisher = isPublisher,
+                            mediaContentType = mediaContentType,
+                            janusCandidate = response.candidate,
+                        )
+                        sendToClient(roomId, userId, MessageType.SIGNALING, payload)
+                    }
+                    is JanusTrickleCompleted -> Unit
+                }
+            }
+
+            is JanusMediaResponse -> {
+                if (response.receiving && response.type == "audio") {
+                    sendSttStart(roomId, userId)
+                    sendMediaStateInit(roomId, userId, )
+                }
+            }
+
+            is JanusErrorResponse -> {
+                logger.error("[Janus Error] Session: ${response.sessionId}, Reason: ${response.error.reason}")
+            }
+
+            else -> logger.debug("[Janus Unknown] Type: ${response.janus}")
         }
+    }
 
-        val scope = CoroutineScope(coroutineContext + runtimeJob)
-
-        scope.launch {
-            observeJanusEvent(roomId, userId, janusConnection.eventFlow)
+    private suspend fun processVideoRoomEvent(roomId: UUID, userId: UUID, data: VideoRoomData.Event) {
+        data.publishers?.takeIf { it.isNotEmpty() }?.let {
+            sendToClient(roomId, userId, MessageType.SIGNALING, NewPublisherEvent(MediaContentType.DEFAULT, it))
         }
-
-        scope.launch {
-            janusKeepAlive(janusConnection.session, janusSessionId)
+        (data.leaving as? Long? ?: data.unpublished)?.let {
+            sendToClient(roomId, userId, MessageType.SIGNALING, PublisherUnpublished(it))
         }
+    }
 
-        return janusConnection.session
+    private suspend fun sendSttStart(roomId: UUID, userId: UUID) {
+        sendToClient(roomId, userId, MessageType.TRANSLATION, SttStart)
+    }
+
+    private suspend fun sendMediaStateInit(roomId: UUID, userId: UUID) {
+        val mediaStateList = roomSessionManager.getUsersSessionInRoom(roomId)
+            .filterNot { it.userId == userId }
+            .map { it.toMediaStateDto() }
+        val payload = MediaStateInit(mediaStateList = mediaStateList)
+        sendToClient(roomId, userId, MessageType.MEDIA_STATE, payload)
+    }
+
+    private suspend fun sendToClient(roomId: UUID, userId: UUID, messageType: MessageType, payload: ResponsePayload) {
+        runCatching {
+            val userContext = roomSessionManager.requireContext(roomId, userId)
+            val serverMessage = ServerMessage(type = messageType, payload = payload)
+            userContext.userSession.sendServerMessage(serverMessage, objectMapper)
+        }.onFailure { e ->
+            logger.error("[Push Failed] User: $userId, Error: ${e.message}")
+        }
     }
 
     suspend fun disposeJanus(roomId: UUID, userId: UUID) {
-        val janusSessionInfo = roomSessionManager.getUserSession(roomId, userId)?.janusSessionInfo ?: return
-        val janusSession = janusSessionInfo.janusSession
-        val janusSessionId = janusSessionInfo.janusSessionId
-        janusVideoRoomService.leave(janusSession, janusSessionId, janusSessionInfo.videoRoomHandleInfo.defaultPublisherHandleId)
-        janusSessionInfo.runtimeJob.cancelAndJoin()
-        janusSessionService.destroySession(janusSession, janusSessionId)
-        if (janusSession.isOpen) janusSession.close().awaitSingleOrNull()
-    }
-
-    private suspend fun janusKeepAlive(janusSession: WebSocketSession, janusSessionId: Long) {
-        while (janusSession.isOpen && currentCoroutineContext().isActive) {
-            try {
-                janusSessionService.keepAlive(janusSession, janusSessionId)
-                delay(KEEP_ALIVE_INTERVAL_MS)
-            } catch (e: Exception) {
-                if(e !is CancellationException) logger.warn("Keep alive failed: ${e.message}")
-                break
-            }
+        logger.info("Dispose Janus for $userId")
+        roomSessionManager.getUserSession(roomId, userId)?.janusSessionInfo?.let {
+            janusSignalingService.leave(it)
+            it.runtimeJob.cancel()
+            janusService.destroySession(it.session, it.sessionId)
+            if (it.session.isOpen) it.session.close().awaitSingleOrNull()
         }
-    }
-
-    private suspend fun observeJanusEvent(roomId: UUID, userId: UUID, event: SharedFlow<JanusEvent>) {
-        event.collect {
-            when (it) {
-                is TrickleCandidateResponse<*> -> it.trickleCandidateHandle(roomId, userId)
-                is JanusMedia -> it.janusMediaHandle(roomId, userId)
-                is JanusPluginEvent<*> -> {
-                    when (val eventData = it.pluginData.data) {
-                        is OnNewPublisher -> eventData.newPublisherEventHandle(roomId, userId, it.jsep)
-                        is OnLeaving -> eventData.notifyLeaving(roomId, userId)
-                        is OnUnpublished -> eventData.notifyUnpublish(roomId, userId)
-                    }
-                }
-            }
-        }
-    }
-
-    private suspend fun TrickleCandidateResponse<*>.trickleCandidateHandle(roomId: UUID, userId: UUID) {
-        if (candidate !is TrickleCandidateBody) return
-
-        val participant = roomSessionManager.getUserSession(roomId, userId) ?: throw WebSocketException.SessionNotFound()
-        val payload = OnIceCandidate(
-            candidate = candidate.candidate,
-            sdpMid = candidate.sdpMid,
-            sdpMLineIndex = candidate.sdpMLineIndex,
-            handleId = handleId
-        )
-        val message = ServerMessage(type = MessageType.SIGNALING, payload = payload)
-        participant.userSession.sendServerMessage(message, objectMapper)
-    }
-
-    private suspend fun JanusMedia.janusMediaHandle(roomId: UUID, userId: UUID) {
-        val participant = roomSessionManager.getUserSession(roomId, userId)
-        val janusSessionInfo = participant?.janusSessionInfo ?: throw WebSocketException.SessionNotFound()
-
-        val publisherInfo = janusSessionInfo.publisherInfoMap[handleId]
-        val isAudioType = MediaType.fromType(type) == MediaType.AUDIO
-
-        if (publisherInfo?.mediaContentType == MediaContentType.DEFAULT && isAudioType) {
-            val userSession = participant.userSession
-            sendSttStart(userSession)
-            sendMediaStateInit(roomId, userId, userSession)
-        }
-    }
-
-    private suspend fun OnLeaving.notifyLeaving(roomId: UUID, userId: UUID) {
-
-    }
-
-    private suspend fun OnUnpublished.notifyUnpublish(roomId: UUID, userId: UUID) {
-        val feedId = unpublished as? Long ?: return
-        val userSession = roomSessionManager.getUserSession(roomId, userId)?.userSession ?: throw WebSocketException.SessionNotFound()
-        val message = ServerMessage(type = MessageType.SIGNALING, payload = Unpublished(feedId))
-        userSession.sendServerMessage(message, objectMapper)
-    }
-
-    private suspend fun OnNewPublisher.newPublisherEventHandle(roomId: UUID, userId: UUID, jsep: VideoRoomJsep?) {
-        val participant = roomSessionManager.getUserSession(roomId, userId) ?: throw WebSocketException.SessionNotFound()
-        val userSession = participant.userSession
-        val payload = NewPublishers(feeds = publishers.map { it.toPublisherFeedResponse() })
-        val message = ServerMessage(type = MessageType.SIGNALING, payload = payload)
-        userSession.sendServerMessage(message, objectMapper)
-    }
-
-    private suspend fun getVideoRoomHandleInfo(
-        janusSession: WebSocketSession,
-        janusSessionId: Long
-    ): VideoRoomHandleInfo {
-        return coroutineScope {
-            val defaultPub = async {
-                janusPluginService.attachPlugin(janusSession, janusSessionId, JanusPlugin.VIDEO_ROOM).getOrThrow().handleId
-            }
-            val screenSharePub = async {
-                janusPluginService.attachPlugin(janusSession, janusSessionId, JanusPlugin.VIDEO_ROOM).getOrThrow().handleId
-            }
-            val subscriber = async {
-                janusPluginService.attachPlugin(janusSession, janusSessionId, JanusPlugin.VIDEO_ROOM).getOrThrow().handleId
-            }
-
-            VideoRoomHandleInfo(
-                defaultPublisherHandleId = defaultPub.await(),
-                screenSharePublisherHandleId = screenSharePub.await(),
-                subscriberHandleId = subscriber.await()
-            )
-        }
-    }
-
-    private suspend fun sendSttStart(userSession: WebSocketSession) {
-        val message = ServerMessage(type = MessageType.TRANSLATION, payload = SttStart)
-        userSession.sendServerMessage(message, objectMapper)
-    }
-
-    private suspend fun sendMediaStateInit(roomId: UUID, userId: UUID, userSession: WebSocketSession) {
-        val mediaStateList = roomSessionManager.getUsersSession(roomId)
-            .map { it.toMediaStateDto() }
-            .filterNot { it.userId == userId.toString() }
-        val payload = MediaStateInit(mediaStateList = mediaStateList)
-        val message = ServerMessage(type = MessageType.MEDIA_STATE, payload = payload)
-        userSession.sendServerMessage(message, objectMapper)
     }
 }

@@ -2,34 +2,21 @@ package com.youhajun.transcall.ws.handler
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.youhajun.transcall.auth.jwt.JwtProvider
-import com.youhajun.transcall.call.history.service.CallHistoryService
-import com.youhajun.transcall.call.participant.service.CallParticipantService
-import com.youhajun.transcall.call.room.service.CallRoomService
-import com.youhajun.transcall.janus.exception.JanusException
-import com.youhajun.transcall.user.service.UserService
 import com.youhajun.transcall.ws.dto.ClientMessage
-import com.youhajun.transcall.ws.dto.ServerMessage
-import com.youhajun.transcall.ws.dto.payload.ChangedRoom
-import com.youhajun.transcall.ws.dto.payload.ConnectedRoom
 import com.youhajun.transcall.ws.exception.WebSocketException
-import com.youhajun.transcall.ws.sendBinaryMessage
-import com.youhajun.transcall.ws.sendServerMessage
-import com.youhajun.transcall.ws.session.RoomSessionManager
-import com.youhajun.transcall.ws.vo.MessageType
-import com.youhajun.transcall.ws.vo.RoomParticipantSession
-import kotlinx.coroutines.cancel
+import com.youhajun.transcall.ws.getParams
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.reactor.mono
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import org.springframework.core.io.buffer.DataBufferUtils
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.socket.CloseStatus
 import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.WebSocketMessage
 import org.springframework.web.reactive.socket.WebSocketSession
-import org.springframework.web.util.UriComponentsBuilder
 import reactor.core.publisher.Mono
 import java.util.*
 
@@ -37,76 +24,42 @@ import java.util.*
 class RoomWebSocketHandler(
     private val objectMapper: ObjectMapper,
     private val messageHandlers: List<WebSocketMessageHandler>,
-    private val roomSessionManager: RoomSessionManager,
     private val jwtProvider: JwtProvider,
     private val janusHandler: JanusHandler,
-    private val userService: UserService,
-    private val roomService: CallRoomService,
-    private val participantService: CallParticipantService,
-    private val historyService: CallHistoryService,
-    private val whisperHandler: WhisperHandler
+    private val whisperHandler: WhisperHandler,
+    private val roomFacade: RoomFacade
 ) : WebSocketHandler {
-
-    private val logger: Logger = LogManager.getLogger(RoomWebSocketHandler::class.java)
 
     companion object {
         private const val ROOM_ID_QUERY_PARAM = "roomId"
         private const val TOKEN_QUERY_PARAM = "token"
     }
 
-    override fun handle(session: WebSocketSession): Mono<Void> = mono {
-        val params = UriComponentsBuilder
-            .fromUri(session.handshakeInfo.uri)
-            .build()
-            .queryParams
+    private val logger: Logger = LogManager.getLogger(RoomWebSocketHandler::class.java)
 
-        val roomId = params.getFirst(ROOM_ID_QUERY_PARAM)?.let(UUID::fromString) ?: throw WebSocketException.MissingRoomId()
-        val token = params.getFirst(TOKEN_QUERY_PARAM) ?: throw WebSocketException.MissingToken()
-        val userId = validateToken(token).let(UUID::fromString)
-        var janusSession: WebSocketSession? = null
-        var whisperSession: WebSocketSession? = null
+    override fun handle(session: WebSocketSession): Mono<Void> {
+        val params = session.getParams()
+        val roomId = params.getFirst(ROOM_ID_QUERY_PARAM)?.let(UUID::fromString) ?: return Mono.error(WebSocketException.MissingRoomId())
+        val token = params.getFirst(TOKEN_QUERY_PARAM) ?: return Mono.error(WebSocketException.MissingToken())
+        val userId = validateToken(token).let(UUID::fromString) ?: return Mono.error(WebSocketException.InvalidToken())
 
-        try {
-            val isFull = roomService.isRoomFull(roomId)
-            if (isFull) throw WebSocketException.RoomFull()
-
-            initSession(roomId, userId, session)
-            val janusJob = launch { janusSession = janusHandler.connectJanus(roomId, userId) }
-            val whisperJob = launch { whisperSession = whisperHandler.connectWhisper(roomId, userId) }
-            janusJob.join()
-            whisperJob.join()
-            joinSession(roomId, userId, session)
-
-            session.receive()
-                .map {
-                    when(it.type) {
-                        WebSocketMessage.Type.TEXT -> it.payloadAsText
-                        WebSocketMessage.Type.BINARY -> it.payload.asInputStream().use { it.readAllBytes() }
-                        else -> Unit
-                    }
-                }
-                .asFlow()
-                .collect { data ->
-                    when(data) {
-                        is String -> handleRoomMessage(userId, roomId, session, data)
-                        is ByteArray -> handleBinaryMessage(whisperSession, data)
-                    }
-                }
-        } catch (e: Exception) {
-            when (e) {
-                is WebSocketException -> session.close(e.closeStatus).awaitSingleOrNull()
-                is JanusException -> session.close(e.closeStatus).awaitSingleOrNull()
-                else -> session.close(CloseStatus.SERVER_ERROR).awaitSingleOrNull()
+        return mono {
+            roomFacade.prepareEntry(roomId, userId, session)
+            coroutineScope {
+                launch { janusHandler.setupJanus(roomId, userId) }
+                //              launch { whisperHandler.connectWhisper(roomId, userId) }
             }
-        } finally {
-            removeSession(roomId, userId)
-            if(session.isOpen) session.close().awaitSingleOrNull()
-            if(janusSession?.isOpen == true) janusSession?.close()?.awaitSingleOrNull()
-            if(whisperSession?.isOpen == true) whisperSession?.close()?.awaitSingleOrNull()
-            this.cancel()
+            roomFacade.completeEntry(roomId, userId)
+        }.then(
+            session.receive()
+                .concatMap { message -> handleMessage(roomId, userId, message) }
+                .then()
+        ).doFinally {
+            logger.info("WebSocket disconnected: userId=$userId")
+            CoroutineScope(Dispatchers.IO).launch {
+                cleanup(roomId, userId)
+            }
         }
-
-        return@mono null
     }
 
     private fun validateToken(token: String): String = runCatching {
@@ -114,88 +67,46 @@ class RoomWebSocketHandler(
         return claims.subject
     }.getOrElse { throw WebSocketException.InvalidToken() }
 
-    private suspend fun handleBinaryMessage(whisperSession: WebSocketSession?, data: ByteArray) {
-        if(whisperSession == null) {
-            logger.warn("Whisper session is not initialized")
-            return
+    private fun handleMessage(roomId: UUID, userId: UUID, message: WebSocketMessage): Mono<Void> {
+        val payload = extractPayload(message) ?: return Mono.empty()
+        return mono {
+            when (payload) {
+                is String -> handleTextMessage(roomId, userId, payload)
+                is ByteArray -> handleBinaryMessage(roomId, userId, payload)
+                else -> Unit
+            }
+        }.then().onErrorResume { error ->
+            logger.warn("Failed to process message for userId=$userId", error)
+            Mono.empty()
         }
-        whisperSession.sendBinaryMessage(data)
     }
 
-    private suspend fun handleRoomMessage(userId: UUID, roomId: UUID, session: WebSocketSession, payloadText: String) {
+    private fun extractPayload(message: WebSocketMessage): Any? {
+        return when (message.type) {
+            WebSocketMessage.Type.TEXT -> message.payloadAsText
+            WebSocketMessage.Type.BINARY -> message.payload.asInputStream().use { it.readAllBytes() }
+            else -> null
+        }
+    }
+
+    private suspend fun handleTextMessage(roomId: UUID, userId: UUID, payload: String) {
+        val clientMsg = objectMapper.readValue(payload, ClientMessage::class.java)
+        messageHandlers
+            .firstOrNull { it.supports(clientMsg.type) }
+            ?.handle(userId, roomId, clientMsg)
+    }
+
+    private suspend fun handleBinaryMessage(roomId: UUID, userId: UUID, bytes: ByteArray) {
+//        whisperHandler.sendAudioData(roomId, userId, bytes)
+    }
+
+    private suspend fun cleanup(roomId: UUID, userId: UUID) {
         runCatching {
-            val clientMsg = objectMapper.readValue(payloadText, ClientMessage::class.java)
-            messageHandlers
-                .firstOrNull { it.supports(clientMsg.type) }
-                ?.handle(userId, roomId, session, clientMsg)
-        }.onFailure {
-            logger.warn("Invalid client message: ${it.message}")
+            janusHandler.disposeJanus(roomId, userId)
+            // whisperHandler.disposeWhisper(roomId, userId)
+            roomFacade.processLeave(roomId, userId)
+        }.onFailure { error ->
+            logger.error("Cleanup failed: userId=$userId, roomId=$roomId", error)
         }
-    }
-
-    private suspend fun initSession(roomId: UUID, userId: UUID, userSession: WebSocketSession) {
-        logger.info("Initializing session for user $userId in room $roomId")
-        val user = userService.findUserById(userId)
-        val historyId = historyService.saveCallHistory(userId, roomId)
-        val participantId = participantService.saveParticipant(roomId, userId)
-        val participantSession = RoomParticipantSession(
-            userId = userId,
-            userSession = userSession,
-            historyId = historyId,
-            participantId = participantId,
-            language = user.language
-        )
-        roomSessionManager.addUserSession(roomId, participantSession)
-    }
-
-    private suspend fun joinSession(roomId: UUID, userId: UUID, userSession: WebSocketSession) {
-        logger.info("Joining session for user $userId in room $roomId")
-        roomService.updateRoomStatus(roomId)
-        roomService.updateCurrentParticipantCount(roomId)
-        sendConnected(userId, roomId, userSession)
-        broadcastRoomChange(roomId, userId)
-    }
-
-    private suspend fun removeSession(roomId: UUID, userId: UUID) {
-        logger.info("Removing session for user $userId in room $roomId")
-        val participant = roomSessionManager.getUserSession(roomId, userId)
-        janusHandler.disposeJanus(roomId, userId)
-        whisperHandler.disposeWhisper(roomId, userId)
-        if (participant != null) {
-            updateOnLeave(participant)
-            roomSessionManager.removeUserSession(roomId, userId)
-            roomService.updateRoomStatus(roomId)
-            roomService.updateCurrentParticipantCount(roomId)
-            broadcastRoomChange(roomId, userId)
-        }
-    }
-
-    private suspend fun sendConnected(userId: UUID, roomId: UUID, userSession: WebSocketSession) {
-        val roomInfo = roomService.getRoomInfo(roomId)
-        val videoRoomHandleInfo = roomSessionManager.getUserSession(roomId, userId)?.janusSessionInfo?.videoRoomHandleInfo ?: throw WebSocketException.SessionNotFound()
-        val participants = participantService.findCurrentParticipants(roomId)
-        val payload = ConnectedRoom(
-            roomInfo = roomInfo,
-            participants = participants.map { it.toDto() },
-            videoRoomHandleInfo = videoRoomHandleInfo
-        )
-        val message = ServerMessage(type = MessageType.ROOM, payload = payload)
-        userSession.sendServerMessage(message, objectMapper)
-    }
-
-    private suspend fun broadcastRoomChange(roomId: UUID, exceptUserId: UUID) {
-        val roomInfo = roomService.getRoomInfo(roomId)
-        val participants = participantService.findCurrentParticipants(roomId)
-        val payload = ChangedRoom(
-            roomInfo = roomInfo,
-            participants = participants.map { it.toDto() },
-        )
-        val message = ServerMessage(type = MessageType.ROOM, payload = payload)
-        roomSessionManager.broadcastMessageToRoom(roomId, message, setOf(exceptUserId))
-    }
-
-    private suspend fun updateOnLeave(participant: RoomParticipantSession) {
-        participantService.updateParticipantOnLeave(participant.participantId)
-        historyService.updateCallHistoryOnLeave(participant.historyId)
     }
 }

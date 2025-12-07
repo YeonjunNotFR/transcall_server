@@ -1,40 +1,35 @@
 package com.youhajun.transcall.ws.handler
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.youhajun.transcall.whisper.TranscriptSegmentAssembler
 import com.youhajun.transcall.whisper.dto.TranscriptUpdate
 import com.youhajun.transcall.whisper.dto.WhisperEvent
 import com.youhajun.transcall.whisper.ws.WhisperWebSocketClient
-import com.youhajun.transcall.user.service.UserService
-import com.youhajun.transcall.whisper.TranscriptSegmentAssembler
-import com.youhajun.transcall.ws.exception.WebSocketException
+import com.youhajun.transcall.ws.sendBinaryMessage
 import com.youhajun.transcall.ws.session.RoomSessionManager
 import com.youhajun.transcall.ws.vo.WhisperSessionInfo
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.socket.WebSocketSession
 import java.util.*
-import kotlin.coroutines.coroutineContext
 
 @Component
 class WhisperHandler(
-    private val objectMapper: ObjectMapper,
     private val roomSessionManager: RoomSessionManager,
     private val whisperWebSocketClient: WhisperWebSocketClient,
-    private val userService: UserService,
     private val segmentAssembler: TranscriptSegmentAssembler
 ) {
 
     private val logger: Logger = LogManager.getLogger(WhisperHandler::class.java)
 
     suspend fun connectWhisper(roomId: UUID, userId: UUID): WebSocketSession {
-        val session = roomSessionManager.getUserSession(roomId, userId) ?: throw WebSocketException.SessionNotFound()
+        val session = roomSessionManager.requireContext(roomId, userId)
         val whisperConnection = whisperWebSocketClient.connect(session.language)
         val runtimeJob = SupervisorJob()
 
@@ -47,13 +42,16 @@ class WhisperHandler(
             it.copy(whisperSessionInfo = whisperSessionInfo)
         }
 
-        val scope = CoroutineScope(coroutineContext + runtimeJob)
-
-        scope.launch {
-            observeWhisperEvent(roomId, userId, whisperConnection.eventFlow)
+        return whisperConnection.session.also {
+            CoroutineScope(Dispatchers.IO + runtimeJob).launch {
+                observeWhisperEvent(roomId, userId, whisperConnection.eventFlow)
+            }
         }
+    }
 
-        return whisperConnection.session
+    suspend fun sendAudioData(roomId: UUID, userId: UUID, data: ByteArray) {
+        val session = roomSessionManager.requireWhisperSession(roomId, userId)
+        session.whisperSession.sendBinaryMessage(data)
     }
 
     suspend fun disposeWhisper(roomId: UUID, userId: UUID) {

@@ -20,7 +20,7 @@ class MediaStateMessageHandler(
 
     override fun supports(type: MessageType): Boolean = type == MessageType.MEDIA_STATE
 
-    override suspend fun handle(userId: UUID, roomId: UUID, session: WebSocketSession, msg: ClientMessage) {
+    override suspend fun handle(userId: UUID, roomId: UUID, msg: ClientMessage) {
         when (val payload = msg.payload as MediaStateRequest) {
             is CameraEnableChanged -> payload.cameraEnableChanged(userId, roomId)
             is MicEnableChanged -> payload.micEnableChanged(userId, roomId)

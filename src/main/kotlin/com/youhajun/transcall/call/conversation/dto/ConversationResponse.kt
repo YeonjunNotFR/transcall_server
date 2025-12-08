@@ -7,11 +7,12 @@ data class ConversationResponse(
     val conversationId: String,
     val roomId: String,
     val senderId: String?,
+    val participantId: String?,
     val state: ConversationState,
     val originText: String,
     val originLanguage: LanguageType,
     val transText: String?,
     val transLanguage: LanguageType?,
-    val createdAtToEpochTime: Long,
-    val updatedAtToEpochTime: Long
+    val createdAt: Long,
+    val updatedAt: Long
 )

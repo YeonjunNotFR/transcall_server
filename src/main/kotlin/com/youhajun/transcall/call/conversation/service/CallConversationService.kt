@@ -17,15 +17,20 @@ interface CallConversationService {
         pagination: CursorPagination,
     ): CursorPage<ConversationResponse>
 
-    suspend fun getConversationsSyncTimeRange(
+    suspend fun getConversationsSyncInTimeRange(
         userId: UUID,
         roomId: UUID,
         timeRange: TimeRange,
-        pagination: CursorPagination,
-        updatedAfter: Long?,
+        updatedAfter: Long,
     ): CursorPage<ConversationResponse>
 
-    suspend fun saveConversation(roomId: UUID, senderId: UUID, originText: String, originLanguage: LanguageType): CallConversation
+    suspend fun saveConversation(
+        roomId: UUID,
+        participantId: UUID,
+        senderId: UUID,
+        originText: String,
+        originLanguage: LanguageType
+    ): CallConversation
 
     suspend fun updateConversationText(conversationId: UUID, text: String)
 

@@ -1,12 +1,12 @@
 package com.youhajun.transcall.call.history.domain
 
-import org.springframework.data.relational.core.mapping.Table
 import com.fasterxml.uuid.Generators
 import com.youhajun.transcall.call.history.dto.CallHistoryResponse
-import com.youhajun.transcall.call.participant.domain.CallParticipant
 import com.youhajun.transcall.common.domain.BaseUUIDEntity
+import io.r2dbc.spi.Row
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
+import org.springframework.data.relational.core.mapping.Table
 import java.time.Instant
 import java.util.*
 
@@ -18,13 +18,13 @@ data class CallHistory(
     @Column("room_id")
     val roomId: UUID,
     @Column("user_id")
-    val userId: UUID?,
+    val userId: UUID,
     @Column("title")
     val title: String,
     @Column("summary")
-    val summary: String? = null,
+    val summary: String = "",
     @Column("memo")
-    val memo: String? = null,
+    val memo: String = "",
     @Column("liked")
     val liked: Boolean = false,
     @Column("deleted")
@@ -32,16 +32,35 @@ data class CallHistory(
     @Column("left_at")
     val leftAt: Instant? = null,
 ) : BaseUUIDEntity() {
-    fun toHistoryResponse(participants: List<CallParticipant>): CallHistoryResponse =
+    fun toHistoryResponse(): CallHistoryResponse =
         CallHistoryResponse(
             historyId = id.toString(),
             roomId = roomId.toString(),
-            joinedAtToEpochTime = createdAt.epochSecond,
-            leftAtToEpochTime = leftAt?.epochSecond,
-            participants = participants.map { it.toDto() },
             title = title,
-            summary = summary ?: "",
-            memo = memo ?: "",
-            isLiked = liked
+            summary = summary,
+            memo = memo,
+            isLiked = liked,
+            leftAt = leftAt?.epochSecond,
+            createdAt = createdAt.epochSecond,
+            updatedAt = updatedAt.epochSecond,
         )
+
+    companion object {
+        fun from(row: Row): CallHistory {
+            return CallHistory(
+                uuid = row.get("id", UUID::class.java)!!,
+                roomId = row.get("room_id", UUID::class.java)!!,
+                userId = row.get("user_id", UUID::class.java)!!,
+                title = row.get("title", String::class.java)!!,
+                summary = row.get("summary", String::class.java)!!,
+                memo = row.get("memo", String::class.java)!!,
+                liked = row.get("liked", Boolean::class.javaObjectType)!!,
+                deleted = row.get("deleted", Boolean::class.javaObjectType)!!,
+                leftAt = row.get("left_at", Instant::class.java)
+            ).apply {
+                createdAt = row.get("created_at", Instant::class.java)!!
+                updatedAt = row.get("updated_at", Instant::class.java)!!
+            }
+        }
+    }
 }

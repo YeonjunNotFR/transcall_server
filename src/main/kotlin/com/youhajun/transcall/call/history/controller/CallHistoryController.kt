@@ -1,6 +1,6 @@
 package com.youhajun.transcall.call.history.controller
 
-import com.youhajun.transcall.call.history.dto.CallHistoryResponse
+import com.youhajun.transcall.call.history.dto.CallHistoryWithParticipantsResponse
 import com.youhajun.transcall.call.history.service.CallHistoryService
 import com.youhajun.transcall.common.domain.UserPrincipal
 import com.youhajun.transcall.pagination.dto.CursorPage
@@ -19,23 +19,23 @@ class CallHistoryController(
     private val callHistoryService: CallHistoryService,
 ) {
     @GetMapping("/histories")
-    suspend fun getCallHistories(
+    suspend fun getCallHistoriesWithParticipants(
         authentication: Authentication,
         @RequestParam(required = false) after: String?,
         @Min(1) @RequestParam(defaultValue = "30") first: Int,
-    ): CursorPage<CallHistoryResponse> {
+    ): CursorPage<CallHistoryWithParticipantsResponse> {
         val principal = authentication.principal as UserPrincipal
         val pagination = CursorPagination(after, first)
-        return callHistoryService.getCallHistories(principal.userId, pagination)
+        return callHistoryService.getCallHistoriesWithParticipants(principal.userId, pagination)
     }
 
     @GetMapping("history/{historyId}")
-    suspend fun getCallHistory(
+    suspend fun getCallHistoryWithParticipants(
         authentication: Authentication,
         @NotBlank @PathVariable historyId: String,
-    ): CallHistoryResponse {
+    ): CallHistoryWithParticipantsResponse {
         val principal = authentication.principal as UserPrincipal
         val historyUUID = UUID.fromString(historyId)
-        return callHistoryService.getCallHistory(principal.userId, historyUUID)
+        return callHistoryService.getCallHistoryWithParticipants(principal.userId, historyUUID)
     }
 }

@@ -13,7 +13,7 @@ enum class RoomJoinType(val type: String) {
     companion object {
         @JvmStatic
         @JsonCreator
-        fun fromType(type: String): RoomJoinType? =
-            RoomJoinType.entries.firstOrNull { it.type == type.lowercase() }
+        fun fromType(type: String): RoomJoinType =
+            RoomJoinType.entries.firstOrNull { it.type == type.lowercase() } ?: CODE_JOIN
     }
 }

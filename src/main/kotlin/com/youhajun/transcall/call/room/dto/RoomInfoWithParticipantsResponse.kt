@@ -2,7 +2,7 @@ package com.youhajun.transcall.call.room.dto
 
 import com.youhajun.transcall.call.participant.dto.CallParticipantResponse
 
-data class OngoingRoomInfoResponse(
+data class RoomInfoWithParticipantsResponse(
     val roomInfo: RoomInfoResponse,
-    val currentParticipants: List<CallParticipantResponse>,
+    val participants: List<CallParticipantResponse>
 )

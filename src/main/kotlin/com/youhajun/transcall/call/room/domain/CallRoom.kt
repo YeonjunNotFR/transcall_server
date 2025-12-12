@@ -1,13 +1,13 @@
 package com.youhajun.transcall.call.room.domain
 
 import com.fasterxml.uuid.Generators
-import com.youhajun.transcall.call.participant.domain.CallParticipant
-import com.youhajun.transcall.call.room.dto.OngoingRoomInfoResponse
 import com.youhajun.transcall.call.room.dto.RoomInfoResponse
 import com.youhajun.transcall.common.domain.BaseUUIDEntity
+import io.r2dbc.spi.Row
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
+import java.time.Instant
 import java.util.*
 
 @Table("call_room")
@@ -51,8 +51,22 @@ data class CallRoom(
         createdAtToEpochTime = createdAt.epochSecond
     )
 
-    fun toOngoingRoomInfoResponse(participants: List<CallParticipant>) = OngoingRoomInfoResponse(
-        roomInfo = toRoomInfoResponse(),
-        currentParticipants = participants.map { it.toDto() }
-    )
+    companion object {
+        fun from(row: Row): CallRoom = CallRoom(
+            uuid = row.get("id", UUID::class.java)!!,
+            roomCode = row.get("room_code", String::class.java)!!,
+            hostId = row.get("host_id", UUID::class.java),
+            title = row.get("title", String::class.java)!!,
+            maxParticipants = row.get("max_participants", Int::class.javaObjectType)!!,
+            currentParticipantsCount = row.get("current_participants_count", Int::class.javaObjectType)!!,
+            visibility = RoomVisibility.fromType(row.get("visibility", String::class.java)!!),
+            joinType = RoomJoinType.fromType(row.get("join_type", String::class.java)!!),
+            janusRoomId = row.get("janus_room_id", Long::class.javaObjectType)!!,
+            tags = (row.get("tags", Array<String>::class.java))?.toSet() ?: emptySet(),
+            status = RoomStatus.fromType(row.get("status", String::class.java)!!)
+        ).apply {
+            createdAt = row.get("created_at", Instant::class.java)!!
+            updatedAt = row.get("updated_at", Instant::class.java)!!
+        }
+    }
 }

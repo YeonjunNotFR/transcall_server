@@ -1,8 +1,8 @@
 package com.youhajun.transcall.call.room.controller
 
 import com.youhajun.transcall.call.room.dto.CreateRoomRequest
-import com.youhajun.transcall.call.room.dto.OngoingRoomInfoResponse
 import com.youhajun.transcall.call.room.dto.RoomInfoResponse
+import com.youhajun.transcall.call.room.dto.RoomInfoWithParticipantsResponse
 import com.youhajun.transcall.call.room.service.CallRoomService
 import com.youhajun.transcall.common.domain.UserPrincipal
 import com.youhajun.transcall.common.vo.SortDirection
@@ -38,27 +38,20 @@ class CallRoomController(
     }
 
     @GetMapping("/{roomId}")
-    suspend fun getRoomInfo(
+    suspend fun getRoomInfoWithCurrentParticipants(
         @NotBlank @PathVariable roomId: String,
-    ): RoomInfoResponse {
-        return callRoomService.getRoomInfo(UUID.fromString(roomId))
-    }
-
-    @GetMapping("/{roomId}/ongoing")
-    suspend fun getOngoingRoomInfo(
-        @NotBlank @PathVariable roomId: String,
-    ): OngoingRoomInfoResponse {
-        return callRoomService.getOngoingRoomInfo(UUID.fromString(roomId))
+    ): RoomInfoWithParticipantsResponse {
+        return callRoomService.getRoomInfoWithCurrentParticipants(UUID.fromString(roomId))
     }
 
     @GetMapping("/list")
-    suspend fun getRoomList(
+    suspend fun getRoomInfoWithCurrentParticipantsList(
         @RequestParam(defaultValue = "DESC") createdAtSort: SortDirection,
         @RequestParam(defaultValue = "DESC") participantSort: SortDirection,
         @RequestParam(required = false) after: String?,
         @Min(1) @RequestParam(defaultValue = "30") first: Int,
-    ): CursorPage<OngoingRoomInfoResponse> {
+    ): CursorPage<RoomInfoWithParticipantsResponse> {
         val pagination = CursorPagination(after, first)
-        return callRoomService.getOngoingRoomList(createdAtSort, participantSort, pagination)
+        return callRoomService.getRoomInfoWithCurrentParticipantsList(createdAtSort, participantSort, pagination)
     }
 }

@@ -3,10 +3,9 @@ package com.youhajun.transcall.call.room.service
 import com.youhajun.transcall.call.participant.service.CallParticipantService
 import com.youhajun.transcall.call.room.domain.CallRoom
 import com.youhajun.transcall.call.room.domain.RoomJoinType
-import com.youhajun.transcall.call.room.domain.RoomStatus
 import com.youhajun.transcall.call.room.dto.CreateRoomRequest
-import com.youhajun.transcall.call.room.dto.OngoingRoomInfoResponse
 import com.youhajun.transcall.call.room.dto.RoomInfoResponse
+import com.youhajun.transcall.call.room.dto.RoomInfoWithParticipantsResponse
 import com.youhajun.transcall.call.room.exception.RoomException
 import com.youhajun.transcall.call.room.repository.CallRoomRepository
 import com.youhajun.transcall.call.room.repository.JanusRoomIdCacheRepository
@@ -68,6 +67,12 @@ class CallRoomServiceImpl(
         }
     }
 
+    override suspend fun getRoomInfoWithCurrentParticipants(roomId: UUID): RoomInfoWithParticipantsResponse {
+        val roomInfo = callRoomRepository.findById(roomId) ?: throw RoomException.RoomNotFound()
+        val participants = callParticipantService.getCurrentParticipants(roomId).map { it.toParticipantResponse() }
+        return RoomInfoWithParticipantsResponse(roomInfo = roomInfo.toRoomInfoResponse(), participants = participants)
+    }
+
     override suspend fun joinRoomCheckByCode(userId: UUID, roomCode: String): RoomInfoResponse {
         val room = callRoomRepository.findByRoomCode(roomCode) ?: throw RoomException.RoomNotFound()
         if(isRoomFull(room.id)) throw RoomException.RoomIsFull()
@@ -75,16 +80,15 @@ class CallRoomServiceImpl(
         return room.toRoomInfoResponse()
     }
 
-    override suspend fun updateCurrentParticipantCount(roomId: UUID) {
+    override suspend fun updateRoomStatusAndCount(roomId: UUID) {
         transactionalOperator.executeAndAwait {
-            val count = callParticipantService.currentCountByRoomId(roomId)
-            callRoomRepository.updateCurrentParticipantCount(roomId, count)
+            callRoomRepository.updateRoomStatusAndCount(roomId)
         }
     }
 
     override suspend fun isRoomFull(roomId: UUID): Boolean {
         val room = callRoomRepository.findById(roomId) ?: throw RoomException.RoomNotFound()
-        val participantCount = callParticipantService.currentCountByRoomId(roomId)
+        val participantCount = callParticipantService.getCurrentCount(roomId)
         return participantCount >= room.maxParticipants
     }
 
@@ -92,22 +96,16 @@ class CallRoomServiceImpl(
         return callRoomRepository.findById(roomId)?.toRoomInfoResponse() ?: throw RoomException.RoomNotFound()
     }
 
-    override suspend fun getOngoingRoomInfo(roomId: UUID): OngoingRoomInfoResponse {
-        val room = callRoomRepository.findById(roomId) ?: throw RoomException.RoomNotFound()
-        val participants = callParticipantService.findCurrentParticipants(roomId)
-        return room.toOngoingRoomInfoResponse(participants)
-    }
-
-    override suspend fun getOngoingRoomList(
+    override suspend fun getRoomInfoWithCurrentParticipantsList(
         createdAtSort: SortDirection,
         participantSort: SortDirection,
         pagination: CursorPagination
-    ): CursorPage<OngoingRoomInfoResponse> {
+    ): CursorPage<RoomInfoWithParticipantsResponse> {
         return CursorPaginationHelper.paginate(
             cursorPagination = pagination,
             codec = UUIDCursorCodec,
             fetchFunc = { cursor, limit ->
-                getOngoingRoomInfoResponse(participantSort, createdAtSort, cursor, limit)
+                callRoomRepository.findAllCurrentRoomInfoWithParticipants(participantSort, createdAtSort, cursor, limit)
             },
             convertItemToCursorFunc = {
                 UUIDCursor(UUID.fromString(it.roomInfo.roomId))
@@ -125,36 +123,6 @@ class CallRoomServiceImpl(
             return@executeAndAwait room.janusRoomId.also {
                 janusRoomIdCacheRepository.saveJanusRoomId(roomId, it, JANUS_ROOM_ID_CACHE_TTL)
             }
-        }
-    }
-
-    override suspend fun updateRoomStatus(roomId: UUID) {
-        transactionalOperator.executeAndAwait {
-            val count = callParticipantService.currentCountByRoomId(roomId)
-            val status = when(count) {
-                0 -> RoomStatus.ENDED
-                1 -> RoomStatus.WAITING
-                else -> RoomStatus.IN_PROGRESS
-            }
-            callRoomRepository.updateRoomStatus(roomId, status)
-        }
-    }
-
-    private suspend fun getOngoingRoomInfoResponse(
-        participantSort: SortDirection,
-        createdAtSort: SortDirection,
-        cursor: UUIDCursor?,
-        limit: Int
-    ): List<OngoingRoomInfoResponse> {
-        val roomList = callRoomRepository.findOngoingRoomList(participantSort, createdAtSort, cursor, limit)
-        val roomIds = roomList.map { it.id }
-        val currentParticipantsGroup = callParticipantService.findCurrentParticipantsGroupByRoomIds(roomIds)
-        return roomList.map { roomInfo ->
-            val participants = currentParticipantsGroup[roomInfo.id]
-                ?.sortedByDescending { it.createdAt }
-                ?: emptyList()
-
-            roomInfo.toOngoingRoomInfoResponse(participants)
         }
     }
 

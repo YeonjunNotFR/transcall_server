@@ -5,10 +5,13 @@ import com.youhajun.transcall.user.domain.LanguageType
 
 data class CallParticipantResponse(
     val participantId: String,
-    val userId: String,
+    val userId: String?,
+    val roomId: String,
     val displayName: String,
     val profileImageUrl: String,
     val languageCode: LanguageType,
     val countryCode: CountryType,
-    val leftAtToEpochTime: Long?,
+    val leftAt: Long?,
+    val updatedAt: Long,
+    val createdAt: Long,
 )

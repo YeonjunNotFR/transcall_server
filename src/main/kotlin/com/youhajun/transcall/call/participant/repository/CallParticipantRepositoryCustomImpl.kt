@@ -1,7 +1,6 @@
 package com.youhajun.transcall.call.participant.repository
 
 import com.youhajun.transcall.call.participant.domain.CallParticipant
-import com.youhajun.transcall.common.vo.TimeRange
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.data.r2dbc.core.awaitExists
@@ -29,40 +28,7 @@ class CallParticipantRepositoryCustomImpl(
             .awaitExists()
     }
 
-    override suspend fun findAllByRoomIdAndTimeRange(roomId: UUID, timeRange: TimeRange): List<CallParticipant> {
-        val criteria = Criteria
-            .where("room_id").`is`(roomId)
-            .and("created_at").greaterThanOrEquals(timeRange.joinedAt)
-            .let {
-                if (timeRange.leftAt != null) it.and("created_at").lessThanOrEquals(timeRange.leftAt) else it
-            }
-
-        return select
-            .matching(Query.query(criteria))
-            .all()
-            .collectList()
-            .awaitSingleOrNull() ?: emptyList()
-    }
-
-    override suspend fun findAllByRoomIds(roomIds: List<UUID>): List<CallParticipant> {
-        val criteria = Criteria.where("room_id").`in`(roomIds)
-        return select
-            .matching(Query.query(criteria))
-            .all()
-            .collectList()
-            .awaitSingleOrNull() ?: emptyList()
-    }
-
-    override suspend fun findCurrentParticipantsByRoomIds(roomIds: List<UUID>): List<CallParticipant> {
-        val criteria = Criteria.where("room_id").`in`(roomIds).and("left_at").isNull
-        return select
-            .matching(Query.query(criteria))
-            .all()
-            .collectList()
-            .awaitSingleOrNull() ?: emptyList()
-    }
-
-    override suspend fun findCurrentParticipantsByRoomId(roomId: UUID): List<CallParticipant> {
+    override suspend fun findAllCurrentParticipantsByRoomId(roomId: UUID): List<CallParticipant> {
         val criteria = Criteria.where("room_id").`is`(roomId).and("left_at").isNull
         return select
             .matching(Query.query(criteria))

@@ -1,7 +1,6 @@
 package com.youhajun.transcall.whisper
 
 import com.youhajun.transcall.call.conversation.domain.CallConversation
-import com.youhajun.transcall.call.conversation.dto.ConversationResponse
 import com.youhajun.transcall.user.domain.LanguageType
 import com.youhajun.transcall.ws.dto.payload.TranslationMessage
 

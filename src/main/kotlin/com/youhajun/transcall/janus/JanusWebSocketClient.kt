@@ -1,4 +1,4 @@
-package com.youhajun.transcall.janus;
+package com.youhajun.transcall.janus
 
 import com.youhajun.transcall.janus.dto.JanusAckResponse
 import com.youhajun.transcall.janus.dto.JanusResponse

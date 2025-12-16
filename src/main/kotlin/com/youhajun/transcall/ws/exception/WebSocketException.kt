@@ -7,7 +7,5 @@ sealed class WebSocketException(val closeStatus: CloseStatus) : RuntimeException
     class MissingToken : WebSocketException(CloseStatus.BAD_DATA)
     class RoomFull : WebSocketException(CloseStatus.POLICY_VIOLATION)
     class InvalidToken : WebSocketException(CloseStatus.POLICY_VIOLATION)
-    class PublisherAnswerIsNull : WebSocketException(CloseStatus.BAD_DATA)
-    class SubscriberOfferIsNull : WebSocketException(CloseStatus.BAD_DATA)
     class SessionNotFound : WebSocketException(CloseStatus.BAD_DATA)
 }

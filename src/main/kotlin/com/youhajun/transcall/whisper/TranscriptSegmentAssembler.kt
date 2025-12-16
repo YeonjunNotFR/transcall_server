@@ -1,10 +1,8 @@
 package com.youhajun.transcall.whisper
 
 import com.youhajun.transcall.call.conversation.service.CallConversationService
-import com.youhajun.transcall.user.domain.LanguageType
 import com.youhajun.transcall.whisper.dto.Segment
 import com.youhajun.transcall.ws.dto.ServerMessage
-import com.youhajun.transcall.ws.dto.payload.TranslationMessage
 import com.youhajun.transcall.ws.session.RoomSessionManager
 import com.youhajun.transcall.ws.vo.MessageType
 import kotlinx.coroutines.sync.Mutex

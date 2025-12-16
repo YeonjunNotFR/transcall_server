@@ -2,8 +2,6 @@ package com.youhajun.transcall.client.openai.ws
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.youhajun.transcall.client.openai.OpenAiConfig
-import com.youhajun.transcall.whisper.ws.WhisperConnection
-import com.youhajun.transcall.whisper.ws.WhisperWebSocketHandler
 import com.youhajun.transcall.user.domain.LanguageType
 import kotlinx.coroutines.CompletableDeferred
 import org.springframework.http.HttpHeaders

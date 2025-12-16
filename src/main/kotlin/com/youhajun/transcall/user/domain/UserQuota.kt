@@ -1,7 +1,6 @@
 package com.youhajun.transcall.user.domain
 
 import com.fasterxml.uuid.Generators
-import com.youhajun.transcall.common.domain.BaseEntity
 import com.youhajun.transcall.common.domain.BaseUUIDEntity
 import com.youhajun.transcall.user.dto.RemainTimeResponse
 import org.springframework.data.annotation.Id

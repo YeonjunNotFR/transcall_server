@@ -1,6 +1,5 @@
 package com.youhajun.transcall.ws.dto.payload
 
-import com.youhajun.transcall.janus.dto.JanusIceCandidate
 import com.youhajun.transcall.janus.dto.PublisherInfo
 import com.youhajun.transcall.janus.dto.StreamInfo
 import com.youhajun.transcall.ws.vo.MediaContentType

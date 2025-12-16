@@ -9,7 +9,6 @@ import com.youhajun.transcall.ws.session.RoomSessionManager
 import com.youhajun.transcall.ws.vo.MediaStateInfo
 import com.youhajun.transcall.ws.vo.MessageType
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.socket.WebSocketSession
 import java.util.*
 
 @Component

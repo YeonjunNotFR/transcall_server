@@ -2,7 +2,6 @@ package com.youhajun.transcall.ws.dto.payload
 
 import com.youhajun.transcall.call.participant.dto.CallParticipantResponse
 import com.youhajun.transcall.call.room.dto.RoomInfoResponse
-import com.youhajun.transcall.ws.vo.VideoRoomHandleInfo
 
 sealed interface RoomResponsePayload : ResponsePayload
 

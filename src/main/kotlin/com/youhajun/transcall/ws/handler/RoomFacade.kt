@@ -33,7 +33,8 @@ class RoomFacade(
         }
 
         val user = userService.findUserById(userId)
-        val historyId = historyService.saveCallHistory(userId, roomId)
+        val roomTitle = roomService.getRoomInfo(roomId).title
+        val historyId = historyService.saveCallHistory(userId, roomId, roomTitle)
         val participantId = participantService.saveParticipant(roomId, userId)
 
         val context = RoomParticipantContext(
@@ -48,8 +49,7 @@ class RoomFacade(
     }
 
     suspend fun completeEntry(roomId: UUID, userId: UUID) {
-        roomService.updateRoomStatus(roomId)
-        roomService.updateCurrentParticipantCount(roomId)
+        roomService.updateRoomStatusAndCount(roomId)
 
         val context = roomSessionManager.getUserSession(roomId, userId) ?: throw WebSocketException.SessionNotFound()
         sendConnectedMessage(context, roomId)
@@ -61,35 +61,26 @@ class RoomFacade(
 
         participantService.updateParticipantOnLeave(context.participantId)
         historyService.updateCallHistoryOnLeave(context.historyId)
-
+        roomService.updateRoomStatusAndCount(roomId)
         roomSessionManager.removeUserSession(roomId, userId)
-
-        roomService.updateRoomStatus(roomId)
-        roomService.updateCurrentParticipantCount(roomId)
 
         broadcastRoomChange(roomId, userId)
     }
 
     private suspend fun sendConnectedMessage(context: RoomParticipantContext, roomId: UUID) {
-        val roomInfo = roomService.getRoomInfo(roomId)
-        val participants = participantService.findCurrentParticipants(roomId)
-
-        val payload = ConnectedRoom(
-            roomInfo = roomInfo,
-            participants = participants.map { it.toDto() },
-        )
+        val roomInfo = roomService.getRoomInfoWithCurrentParticipants(roomId)
+        val payload = ConnectedRoom(roomInfo = roomInfo.roomInfo, participants = roomInfo.participants)
 
         val message = ServerMessage(type = MessageType.ROOM, payload = payload)
         context.userSession.sendServerMessage(message, objectMapper)
     }
 
 
-    private suspend fun broadcastRoomChange(roomId: UUID, exceptUserId: UUID) {
-        val roomInfo = roomService.getRoomInfo(roomId)
-        val participants = participantService.findCurrentParticipants(roomId)
-        val payload = ChangedRoom(roomInfo = roomInfo, participants = participants.map { it.toDto() })
+    private suspend fun broadcastRoomChange(roomId: UUID, userId: UUID) {
+        val roomInfo = roomService.getRoomInfoWithCurrentParticipants(roomId)
+        val payload = ChangedRoom(roomInfo = roomInfo.roomInfo, participants = roomInfo.participants)
 
         val message = ServerMessage(type = MessageType.ROOM, payload = payload)
-        roomSessionManager.broadcastMessageToRoom(roomId, message, setOf(exceptUserId))
+        roomSessionManager.broadcastMessageToRoom(roomId, message, setOf(userId))
     }
 }

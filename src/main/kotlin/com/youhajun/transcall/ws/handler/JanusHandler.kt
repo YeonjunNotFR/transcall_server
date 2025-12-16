@@ -93,7 +93,7 @@ class JanusHandler(
             is JanusMediaResponse -> {
                 if (response.receiving && response.type == "audio") {
                     sendSttStart(roomId, userId)
-                    sendMediaStateInit(roomId, userId, )
+                    sendMediaStateInit(roomId, userId)
                 }
             }
 

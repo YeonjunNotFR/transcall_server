@@ -17,6 +17,6 @@ object UUIDCursorCodec : CursorCodec<UUIDCursor> {
 
     override fun decode(raw: String): UUIDCursor {
         val decoded = String(decoder.decode(raw), StandardCharsets.UTF_8)
-        return UUIDCursor(uuid = UUID.fromString(decoded),)
+        return UUIDCursor(uuid = UUID.fromString(decoded))
     }
 }

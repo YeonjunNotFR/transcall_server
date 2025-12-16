@@ -1,4 +1,4 @@
-package com.youhajun.transcall.user.domain;
+package com.youhajun.transcall.user.domain
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonValue

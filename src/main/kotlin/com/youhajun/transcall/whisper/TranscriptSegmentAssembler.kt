@@ -55,8 +55,14 @@ class TranscriptSegmentAssembler(
         segmentKey: SegmentKey,
     ): SegmentState {
         return states[segmentKey] ?: run {
-            val language = roomSessionManager.getUserSession(roomId, userId)?.language ?: LanguageType.ENGLISH
-            val saved = conversationService.saveConversation(roomId, userId, "", language)
+            val context = roomSessionManager.requireContext(roomId, userId)
+            val saved = conversationService.saveConversation(
+                roomId = roomId,
+                participantId = context.participantId,
+                senderId = userId,
+                originText = "",
+                originLanguage = context.language
+            )
             val newState = SegmentState(key = segmentKey, conversation = saved)
             states.putIfAbsent(segmentKey, newState) ?: newState
         }

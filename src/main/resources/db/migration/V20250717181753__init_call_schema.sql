@@ -27,11 +27,29 @@ CREATE TABLE IF NOT EXISTS call_room
 
 ALTER SEQUENCE janus_room_id_seq OWNED BY call_room.janus_room_id;
 
+CREATE TABLE IF NOT EXISTS call_participant
+(
+    id                UUID         NOT NULL PRIMARY KEY,
+    room_id           UUID         NOT NULL,
+    user_id           UUID,
+    language          VARCHAR(20)  NOT NULL,
+    country           VARCHAR(20)  NOT NULL,
+    display_name      VARCHAR(100) NOT NULL,
+    profile_image_url TEXT,
+    left_at           TIMESTAMP,
+    created_at        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_participant_room_id FOREIGN KEY (room_id) REFERENCES call_room (id) ON DELETE CASCADE,
+    CONSTRAINT fk_participant_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
+);
+
 CREATE TABLE call_conversation
 (
     id              UUID        NOT NULL PRIMARY KEY,
     room_id         UUID        NOT NULL,
     sender_id       UUID,
+    participant_id  UUID,
     state           VARCHAR(20) NOT NULL,
     origin_text     TEXT        NOT NULL,
     origin_language VARCHAR(20) NOT NULL,
@@ -39,7 +57,8 @@ CREATE TABLE call_conversation
     updated_at      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_conversation_room_id FOREIGN KEY (room_id) REFERENCES call_room (id) ON DELETE CASCADE,
-    CONSTRAINT fk_conversation_sender FOREIGN KEY (sender_id) REFERENCES users (id) ON DELETE SET NULL
+    CONSTRAINT fk_conversation_sender FOREIGN KEY (sender_id) REFERENCES users (id) ON DELETE SET NULL,
+    CONSTRAINT fk_conversation_participant_id FOREIGN KEY (participant_id) REFERENCES call_participant (id) ON DELETE SET NULL
 );
 
 CREATE TABLE call_conversation_trans
@@ -59,12 +78,12 @@ CREATE TABLE call_conversation_trans
 
 CREATE TABLE IF NOT EXISTS call_history
 (
-    id         UUID         NOT NULL PRIMARY KEY,
-    room_id    UUID         NOT NULL,
-    user_id    UUID         NOT NULL,
-    title      VARCHAR(255) NOT NULL,
-    summary    VARCHAR(1000),
-    memo       VARCHAR(1000),
+    id         UUID          NOT NULL PRIMARY KEY,
+    room_id    UUID          NOT NULL,
+    user_id    UUID          NOT NULL,
+    title      VARCHAR(255)  NOT NULL,
+    summary    VARCHAR(10000) NOT NULL,
+    memo       VARCHAR(10000) NOT NULL,
     liked      BOOLEAN                  DEFAULT FALSE,
     deleted    BOOLEAN                  DEFAULT FALSE,
     left_at    TIMESTAMP WITH TIME ZONE,
@@ -73,21 +92,4 @@ CREATE TABLE IF NOT EXISTS call_history
 
     CONSTRAINT fk_history_room_id FOREIGN KEY (room_id) REFERENCES call_room (id) ON DELETE CASCADE,
     CONSTRAINT fk_history_user_id FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS call_participant
-(
-    id                UUID         NOT NULL PRIMARY KEY,
-    room_id           UUID         NOT NULL,
-    user_id           UUID,
-    language          VARCHAR(20)  NOT NULL,
-    country           VARCHAR(20)  NOT NULL,
-    display_name      VARCHAR(100) NOT NULL,
-    profile_image_url TEXT,
-    left_at           TIMESTAMP,
-    created_at        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_participant_room_id FOREIGN KEY (room_id) REFERENCES call_room (id) ON DELETE CASCADE,
-    CONSTRAINT fk_participant_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
 );

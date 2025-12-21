@@ -8,7 +8,7 @@ data class MyInfoResponse(
     val displayName: String,
     val languageCode: LanguageType,
     val countryCode: CountryType,
-    val membershipPlan: String,
-    val remainTime: RemainTimeResponse,
-    val imageUrl: String,
+    val imageUrl: String?,
+    val updatedAt: Long,
+    val createdAt: Long,
 )

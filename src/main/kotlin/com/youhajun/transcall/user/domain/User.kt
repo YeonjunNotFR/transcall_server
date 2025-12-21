@@ -3,7 +3,6 @@ package com.youhajun.transcall.user.domain
 import com.fasterxml.uuid.Generators
 import com.youhajun.transcall.common.domain.BaseUUIDEntity
 import com.youhajun.transcall.user.dto.MyInfoResponse
-import com.youhajun.transcall.user.dto.RemainTimeResponse
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
@@ -24,22 +23,20 @@ data class User(
     val language: LanguageType = LanguageType.ENGLISH,
     @Column("country")
     val country: CountryType = CountryType.UNITED_STATES,
-    @Column("membership_plan")
-    val membershipPlan: MembershipPlan = MembershipPlan.Free,
     @Column("profile_image_url")
     val profileImageUrl: String? = null,
     @Column("is_active")
     val isActive: Boolean = true,
 ) : BaseUUIDEntity() {
-    fun toMyInfoResponse(remainTime: RemainTimeResponse): MyInfoResponse {
+    fun toMyInfoResponse(): MyInfoResponse {
         return MyInfoResponse(
             userId = id.toString(),
             displayName = nickname,
             languageCode = language,
             countryCode = country,
-            membershipPlan = membershipPlan.string,
             imageUrl = profileImageUrl ?: "",
-            remainTime = remainTime
+            updatedAt = updatedAt.toEpochMilli(),
+            createdAt = createdAt.toEpochMilli()
         )
     }
 }

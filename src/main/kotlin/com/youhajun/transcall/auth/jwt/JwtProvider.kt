@@ -1,6 +1,6 @@
 package com.youhajun.transcall.auth.jwt
 
-import com.youhajun.transcall.auth.domain.RefreshToken
+import com.youhajun.transcall.auth.domain.UserAuth
 import com.youhajun.transcall.auth.dto.JwtTokenResponse
 import com.youhajun.transcall.auth.exception.AuthException
 import com.youhajun.transcall.common.domain.UserPrincipal
@@ -55,8 +55,9 @@ class JwtProvider(
         return UsernamePasswordAuthenticationToken(principal, token, listOf(SimpleGrantedAuthority(plan)))
     }
 
-    fun validateRefreshToken(refreshToken: RefreshToken) {
-        if (refreshToken.expireAt.isBefore(Instant.now())) {
+    fun validateRefreshToken(userAuth: UserAuth) {
+        val expireAt = userAuth.tokenExpireAt ?: throw AuthException.JwtExpiredException()
+        if (expireAt.isBefore(Instant.now())) {
             throw AuthException.JwtExpiredException()
         }
     }
@@ -66,7 +67,6 @@ class JwtProvider(
 
         return Jwts.builder()
             .setSubject(user.id.toString())
-            .claim(CLAIM_KEY_USER_PLAN, user.membershipPlan)
             .setIssuedAt(now)
             .setExpiration(expiry)
             .signWith(secretKey)

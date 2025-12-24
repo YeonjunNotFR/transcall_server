@@ -1,6 +1,5 @@
 package com.youhajun.transcall.auth.service
 
-import com.youhajun.transcall.auth.domain.RefreshToken
 import com.youhajun.transcall.auth.dto.JwtTokenResponse
 import com.youhajun.transcall.auth.dto.LoginRequest
 import com.youhajun.transcall.auth.dto.NonceResponse
@@ -9,7 +8,7 @@ import com.youhajun.transcall.auth.google.GoogleService
 import com.youhajun.transcall.auth.jwt.JwtConfig
 import com.youhajun.transcall.auth.jwt.JwtProvider
 import com.youhajun.transcall.auth.repository.LoginNonceRepository
-import com.youhajun.transcall.auth.repository.RefreshTokenRepository
+import com.youhajun.transcall.auth.repository.UserAuthRepository
 import com.youhajun.transcall.user.domain.SocialType
 import com.youhajun.transcall.user.domain.User
 import com.youhajun.transcall.user.service.UserService
@@ -23,7 +22,7 @@ import java.util.*
 @Service
 class AuthServiceImpl(
     private val transactionalOperator: TransactionalOperator,
-    private val refreshTokenRepository: RefreshTokenRepository,
+    private val userAuthRepository: UserAuthRepository,
     private val loginNonceRepository: LoginNonceRepository,
     private val userService: UserService,
     private val googleService: GoogleService,
@@ -31,20 +30,23 @@ class AuthServiceImpl(
     private val jwtConfig: JwtConfig,
 ) : AuthService {
 
-    override suspend fun loginOrCreate(loginRequest: LoginRequest): JwtTokenResponse {
+    override suspend fun loginOrCreate(loginRequest: LoginRequest, remoteAddr: String?): JwtTokenResponse {
         val socialEmail = fetchSocialEmail(loginRequest)
         val user = userService.findOrCreateUser(socialEmail, loginRequest.socialType)
         return transactionalOperator.executeAndAwait {
+            userAuthRepository.upsertSocialId(user.id, loginRequest.token)
+            userAuthRepository.upsertLastLogin(user.id, Instant.now(), remoteAddr)
             tokenRotation(user)
         }
     }
 
-    override suspend fun reissueToken(offerRefreshToken: String): JwtTokenResponse {
-        val refreshToken = refreshTokenRepository.findByToken(offerRefreshToken) ?: throw AuthException.InvalidRefreshTokenException()
-        val userId = refreshToken.userId ?: throw AuthException.UserNotFoundException()
-        jwtProvider.validateRefreshToken(refreshToken)
+    override suspend fun reissueToken(offerRefreshToken: String, remoteAddr: String?): JwtTokenResponse {
+        val userAuth = userAuthRepository.findByRefreshToken(offerRefreshToken) ?: throw AuthException.InvalidRefreshTokenException()
+        val userId = userAuth.id
+        jwtProvider.validateRefreshToken(userAuth)
         val user = userService.findUserById(userId)
         return transactionalOperator.executeAndAwait {
+            userAuthRepository.upsertLastLogin(user.id, Instant.now(), remoteAddr)
             tokenRotation(user)
         }
     }
@@ -59,15 +61,9 @@ class AuthServiceImpl(
 
     private suspend fun tokenRotation(user: User): JwtTokenResponse {
         return jwtProvider.issueTokens(user).also {
-            refreshTokenRepository.deleteByUserId(user.id)
-            saveRefreshToken(it.refreshToken, user.id)
+            val expireAt = Instant.now().plus(Duration.ofMillis(jwtConfig.refreshTokenValidityMs))
+            userAuthRepository.upsertRefreshToken(user.id, it.refreshToken, expireAt)
         }
-    }
-
-    private suspend fun saveRefreshToken(refreshToken: String, userId: UUID) {
-        val expireAt = Instant.now().plus(Duration.ofMillis(jwtConfig.refreshTokenValidityMs))
-        val newRefreshToken = RefreshToken(token = refreshToken, userId = userId, expireAt = expireAt)
-        refreshTokenRepository.save(newRefreshToken)
     }
 
     private suspend fun fetchSocialEmail(loginRequest: LoginRequest): String {

@@ -6,6 +6,7 @@ import com.youhajun.transcall.auth.dto.NonceResponse
 import com.youhajun.transcall.auth.dto.ReissueTokenRequest
 import com.youhajun.transcall.auth.service.AuthService
 import jakarta.validation.Valid
+import org.springframework.http.server.reactive.ServerHttpRequest
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -18,8 +19,11 @@ class AuthController(
     private val authService: AuthService
 ) {
     @PostMapping("/social-login")
-    suspend fun socialLogin(@Valid @RequestBody request: LoginRequest): JwtTokenResponse {
-        return authService.loginOrCreate(request)
+    suspend fun socialLogin(
+        @Valid @RequestBody request: LoginRequest,
+        httpServletRequest: ServerHttpRequest
+    ): JwtTokenResponse {
+        return authService.loginOrCreate(request, extractForwardedFor(httpServletRequest))
     }
 
     @GetMapping("/nonce")
@@ -28,7 +32,15 @@ class AuthController(
     }
 
     @PostMapping("/reissue")
-    suspend fun reissueToken(@Valid @RequestBody request: ReissueTokenRequest): JwtTokenResponse {
-        return authService.reissueToken(request.refreshToken)
+    suspend fun reissueToken(
+        @Valid @RequestBody request: ReissueTokenRequest,
+        httpServletRequest: ServerHttpRequest
+    ): JwtTokenResponse {
+        return authService.reissueToken(request.refreshToken, extractForwardedFor(httpServletRequest))
+    }
+
+    private fun extractForwardedFor(request: ServerHttpRequest): String? {
+        val xff = request.headers.getFirst("X-Forwarded-For")
+        return xff?.split(",")?.firstOrNull()?.trim()?.ifBlank { null }
     }
 }

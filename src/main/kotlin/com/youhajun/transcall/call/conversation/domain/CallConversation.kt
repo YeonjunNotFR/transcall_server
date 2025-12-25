@@ -43,8 +43,8 @@ data class CallConversation(
         transText = transText,
         transLanguage = transLanguage,
         state = state,
-        createdAt = createdAt.epochSecond,
-        updatedAt = updatedAt.epochSecond,
+        createdAt = createdAt.toEpochMilli(),
+        updatedAt = updatedAt.toEpochMilli(),
     )
 
     companion object {

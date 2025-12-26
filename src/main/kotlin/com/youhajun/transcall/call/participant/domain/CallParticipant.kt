@@ -40,9 +40,9 @@ data class CallParticipant(
         profileImageUrl = profileImageUrl ?: "",
         languageCode = language,
         countryCode = country,
-        leftAt = leftAt?.epochSecond,
-        updatedAt = updatedAt.epochSecond,
-        createdAt = createdAt.epochSecond,
+        leftAt = leftAt?.toEpochMilli(),
+        updatedAt = updatedAt.toEpochMilli(),
+        createdAt = createdAt.toEpochMilli(),
     )
 
     companion object {

@@ -15,5 +15,5 @@ data class RoomInfoResponse(
     val tags: Set<String>,
     val status: RoomStatus,
     val hostId: String,
-    val createdAtToEpochTime: Long
+    val createdAt: Long
 )

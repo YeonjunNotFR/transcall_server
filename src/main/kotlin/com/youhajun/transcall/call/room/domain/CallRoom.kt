@@ -48,7 +48,7 @@ data class CallRoom(
         status = status,
         joinType = joinType,
         hostId = hostId.toString(),
-        createdAtToEpochTime = createdAt.epochSecond
+        createdAt = createdAt.toEpochMilli()
     )
 
     companion object {

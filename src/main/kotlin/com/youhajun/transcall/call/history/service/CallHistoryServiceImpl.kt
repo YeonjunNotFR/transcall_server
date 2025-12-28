@@ -10,6 +10,7 @@ import com.youhajun.transcall.pagination.cursor.UUIDCursor
 import com.youhajun.transcall.pagination.cursor.UUIDCursorCodec
 import com.youhajun.transcall.pagination.dto.CursorPage
 import com.youhajun.transcall.pagination.vo.CursorPagination
+import com.youhajun.transcall.pagination.vo.PagingDirection
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
@@ -47,13 +48,14 @@ class CallHistoryServiceImpl(
 
     override suspend fun getCallHistoriesWithParticipants(
         userId: UUID,
-        pagination: CursorPagination
+        pagination: CursorPagination,
+        direction: PagingDirection
     ): CursorPage<CallHistoryWithParticipantsResponse> {
         return CursorPaginationHelper.paginate(
             cursorPagination = pagination,
             codec = UUIDCursorCodec,
             fetchFunc = { cursor, limit ->
-                callHistoryRepository.findAllCallHistoryWithParticipants(userId, cursor, limit)
+                callHistoryRepository.findAllCallHistoryWithParticipants(userId, cursor, limit, direction)
             },
             convertItemToCursorFunc = {
                 UUIDCursor(UUID.fromString(it.history.historyId))

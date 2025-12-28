@@ -4,6 +4,7 @@ import com.youhajun.transcall.call.history.dto.CallHistoryResponse
 import com.youhajun.transcall.call.history.dto.CallHistoryWithParticipantsResponse
 import com.youhajun.transcall.pagination.dto.CursorPage
 import com.youhajun.transcall.pagination.vo.CursorPagination
+import com.youhajun.transcall.pagination.vo.PagingDirection
 import java.util.*
 
 interface CallHistoryService {
@@ -22,6 +23,7 @@ interface CallHistoryService {
 
     suspend fun getCallHistoriesWithParticipants(
         userId: UUID,
-        pagination: CursorPagination
+        pagination: CursorPagination,
+        direction: PagingDirection
     ): CursorPage<CallHistoryWithParticipantsResponse>
 }

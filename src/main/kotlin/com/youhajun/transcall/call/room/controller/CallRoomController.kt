@@ -46,12 +46,16 @@ class CallRoomController(
 
     @GetMapping("/list")
     suspend fun getRoomInfoWithCurrentParticipantsList(
-        @RequestParam(defaultValue = "DESC") createdAtSort: SortDirection,
-        @RequestParam(defaultValue = "DESC") participantSort: SortDirection,
+        @RequestParam(required = true) createdAtSort: String,
+        @RequestParam(required = true) participantSort: String,
         @RequestParam(required = false) after: String?,
         @Min(1) @RequestParam(defaultValue = "30") first: Int,
     ): CursorPage<RoomInfoWithParticipantsResponse> {
         val pagination = CursorPagination(after, first)
-        return callRoomService.getRoomInfoWithCurrentParticipantsList(createdAtSort, participantSort, pagination)
+        return callRoomService.getRoomInfoWithCurrentParticipantsList(
+            SortDirection.fromType(createdAtSort),
+            SortDirection.fromType(participantSort),
+            pagination
+        )
     }
 }

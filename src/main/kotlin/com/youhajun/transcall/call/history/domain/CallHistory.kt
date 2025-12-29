@@ -40,9 +40,9 @@ data class CallHistory(
             summary = summary,
             memo = memo,
             isLiked = liked,
-            leftAt = leftAt?.epochSecond,
-            createdAt = createdAt.epochSecond,
-            updatedAt = updatedAt.epochSecond,
+            leftAt = leftAt?.toEpochMilli(),
+            createdAt = createdAt.toEpochMilli(),
+            updatedAt = updatedAt.toEpochMilli(),
         )
 
     companion object {

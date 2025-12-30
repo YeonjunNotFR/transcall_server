@@ -2,13 +2,15 @@ package com.youhajun.transcall.call.history.repository
 
 import com.youhajun.transcall.call.history.dto.CallHistoryWithParticipantsResponse
 import com.youhajun.transcall.pagination.cursor.UUIDCursor
+import com.youhajun.transcall.pagination.vo.PagingDirection
 import java.util.*
 
 interface CallHistoryRepositoryCustom {
     suspend fun findAllCallHistoryWithParticipants(
         userId: UUID,
         cursor: UUIDCursor?,
-        limit: Int
+        limit: Int,
+        direction: PagingDirection
     ): List<CallHistoryWithParticipantsResponse>
 
     suspend fun findCallHistoryWithParticipants(

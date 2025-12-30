@@ -4,6 +4,7 @@ import com.youhajun.transcall.call.history.domain.CallHistory
 import com.youhajun.transcall.call.history.dto.CallHistoryWithParticipantsResponse
 import com.youhajun.transcall.call.participant.domain.CallParticipant
 import com.youhajun.transcall.pagination.cursor.UUIDCursor
+import com.youhajun.transcall.pagination.vo.PagingDirection
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
@@ -23,14 +24,17 @@ class CallHistoryRepositoryCustomImpl(
     private val databaseClient: DatabaseClient
 ) : CallHistoryRepositoryCustom {
 
-    private val select = template.select<CallHistory>()
     private val update = template.update<CallHistory>()
 
     override suspend fun findAllCallHistoryWithParticipants(
         userId: UUID,
         cursor: UUIDCursor?,
-        limit: Int
+        limit: Int,
+        direction: PagingDirection
     ): List<CallHistoryWithParticipantsResponse> {
+        val operator = if (direction == PagingDirection.NEXT) "<" else ">"
+        val sortOrder = if (direction == PagingDirection.NEXT) "DESC" else "ASC"
+
         val sql = """
         SELECT 
             h.*,
@@ -41,8 +45,8 @@ class CallHistoryRepositoryCustomImpl(
         FROM (
             SELECT * FROM call_history 
             WHERE user_id = :userId AND deleted = false
-            ${if (cursor != null) "AND id < :cursorId" else ""}
-            ORDER BY id DESC
+            ${if (cursor != null) "AND id $operator :cursorId" else ""}
+            ORDER BY id $sortOrder
             LIMIT :limit
         ) h
         LEFT JOIN call_participant p ON h.room_id = p.room_id 

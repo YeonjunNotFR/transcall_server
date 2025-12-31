@@ -6,5 +6,5 @@ data class ErrorResponse(
     val status: String,
     val message: String,
     val data: Any? = null,
-    val timestamp: Long = Instant.now().epochSecond
+    val timestamp: Long = Instant.now().toEpochMilli()
 )

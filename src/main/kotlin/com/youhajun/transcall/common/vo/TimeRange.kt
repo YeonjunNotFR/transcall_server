@@ -8,9 +8,9 @@ data class TimeRange(
 ) {
 
     companion object {
-        fun fromEpochTime(joinedAtEpoch: Long, leftAtEpoch: Long?): TimeRange = TimeRange(
-            joinedAt = Instant.ofEpochSecond(joinedAtEpoch),
-            leftAt = leftAtEpoch?.let { Instant.ofEpochSecond(it) }
+        fun fromEpochTime(joinedAtEpochMillis: Long, leftAtEpochMillis: Long?): TimeRange = TimeRange(
+            joinedAt = Instant.ofEpochMilli(joinedAtEpochMillis),
+            leftAt = leftAtEpochMillis?.let { Instant.ofEpochMilli(it) }
         )
     }
 }
